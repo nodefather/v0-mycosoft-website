@@ -87,31 +87,23 @@ const initialSpecies: FungiSpecies[] = [
 // Initialize the database with the species collection
 tempDB.initCollection<FungiSpecies>("species", initialSpecies, ["id", "iNaturalistId", "scientificName"])
 
-// Export database functions\
-export const findOne = async <T>(collection: string, query: any = {})
-: Promise<T | null> =>
-{
+// Export database functions
+export async function findOne<T>(collection: string, query: any = {}): Promise<T | null> {
   return tempDB.findOne<T>(collection, query)
 }
 
-export const find = async <T>(collection: string, query: any = {})
-: Promise<T[]> =>
-{
+export async function find<T>(collection: string, query: any = {}): Promise<T[]> {
   return tempDB.find<T>(collection, query)
 }
 
-export const insertOne = async <T>(collection: string, document: T)
-: Promise<void> =>
-{
+export async function insertOne<T>(collection: string, document: T): Promise<void> {
   return tempDB.insertOne<T>(collection, document)
 }
 
-export const updateOne = async <T>(collection: string, query: any, update: any)
-: Promise<void> =>
-{
+export async function updateOne<T>(collection: string, query: any, update: any): Promise<void> {
   return tempDB.updateOne<T>(collection, query, update)
 }
 
-export const deleteOne = async (collection: string, query: any): Promise<void> => {
+export async function deleteOne(collection: string, query: any): Promise<void> {
   return tempDB.deleteOne(collection, query)
 }

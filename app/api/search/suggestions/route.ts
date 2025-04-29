@@ -50,10 +50,10 @@ export async function GET(request: Request) {
             }),
           ),
       ),
-      // iNaturalist search
+      // iNaturalist search - now returns empty results on error instead of throwing
       searchFungi(query),
       // Elsevier articles search
-      searchElsevierArticles(query),
+      searchElsevierArticles(query).catch(() => []), // Return empty array on error
       // Compound search
       Promise.resolve(
         searchCompounds(query).map(
@@ -70,12 +70,12 @@ export async function GET(request: Request) {
 
     const suggestions: SearchSuggestion[] = []
 
-    // Add local results first
+    // Add local results first - these should always be available
     if (localResults.status === "fulfilled") {
       suggestions.push(...localResults.value)
     }
 
-    // Add iNaturalist results
+    // Add iNaturalist results if available
     if (iNaturalistResults.status === "fulfilled" && iNaturalistResults.value?.results) {
       suggestions.push(
         ...iNaturalistResults.value.results
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
       )
     }
 
-    // Add article results
+    // Add article results if available
     if (elsevierResults.status === "fulfilled") {
       suggestions.push(
         ...elsevierResults.value.map(
@@ -107,7 +107,7 @@ export async function GET(request: Request) {
       )
     }
 
-    // Add compound results
+    // Add compound results if available
     if (compoundResults.status === "fulfilled") {
       suggestions.push(...compoundResults.value)
     }
@@ -117,18 +117,26 @@ export async function GET(request: Request) {
       (suggestion, index, self) => index === self.findIndex((s) => s.id === suggestion.id),
     )
 
+    // If we have no results at all, provide a helpful message
+    if (uniqueSuggestions.length === 0) {
+      return NextResponse.json({
+        suggestions: [],
+        query,
+        message: "No results found. Try a different search term.",
+      })
+    }
+
     return NextResponse.json({
       suggestions: uniqueSuggestions.slice(0, limit),
       query,
     })
   } catch (error) {
     console.error("Search suggestions error:", error)
-    return NextResponse.json(
-      {
-        suggestions: [],
-        error: error instanceof Error ? error.message : "Failed to get suggestions",
-      },
-      { status: 500 },
-    )
+    // Return a minimal response with no suggestions but no error status
+    // This prevents the UI from breaking when search fails
+    return NextResponse.json({
+      suggestions: [],
+      error: error instanceof Error ? error.message : "Failed to get suggestions",
+    })
   }
 }

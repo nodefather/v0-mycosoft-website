@@ -45,10 +45,38 @@ interface INaturalistTaxonomy {
 }
 
 // Update the getSpeciesPhotos function to prioritize high-quality images
+async function fetchWithRetry(url: string, retries = 3, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(5000), // 5 second timeout
+      })
+      if (!response.ok) {
+        if (response.status === 503) {
+          // Retry on 503 Service Unavailable
+          console.warn(`Attempt ${i + 1} failed with status ${response.status}. Retrying in ${delay}ms...`)
+          await new Promise((resolve) => setTimeout(resolve, delay))
+          delay *= 2 // Exponential backoff
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+      } else {
+        return response
+      }
+    } catch (error) {
+      console.error(`Attempt ${i + 1} failed:`, error)
+      if (i === retries - 1) throw error
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      delay *= 2 // Exponential backoff
+    }
+  }
+  throw new Error("Failed to fetch after multiple retries")
+}
+
 export async function getSpeciesPhotos(taxonId: string, limit = 12): Promise<INaturalistPhoto[]> {
   try {
     // First try to get photos from the taxon endpoint
-    const taxonResponse = await fetch(`${INATURALIST_API}/taxa/${taxonId}?all_photos=true`)
+    const taxonResponse = await fetchWithRetry(`${INATURALIST_API}/taxa/${taxonId}?all_photos=true`)
     if (!taxonResponse.ok) {
       throw new Error(`iNaturalist API error: ${taxonResponse.status}`)
     }
@@ -70,7 +98,7 @@ export async function getSpeciesPhotos(taxonId: string, limit = 12): Promise<INa
       licensed: "true",
     })
 
-    const obsResponse = await fetch(`${INATURALIST_API}/observations?${params.toString()}`)
+    const obsResponse = await fetchWithRetry(`${INATURALIST_API}/observations?${params.toString()}`)
     if (!obsResponse.ok) {
       throw new Error(`iNaturalist API error: ${obsResponse.status}`)
     }
@@ -266,7 +294,7 @@ export async function getFungiDetails(id: string) {
 const FUNGI_TAXON_ID = "47170"
 
 // Add timeout and retry logic to searchFungi
-export async function searchFungi(query: string, retries = 2): Promise<any> {
+export async function searchFungi(query: string, retries = 3): Promise<any> {
   const timeout = 5000 // 5 second timeout
 
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -287,18 +315,24 @@ export async function searchFungi(query: string, retries = 2): Promise<any> {
       clearTimeout(timeoutId)
 
       if (!response.ok) {
-        throw new Error(`iNaturalist API error: ${response.status}`)
+        console.warn(`iNaturalist API error on attempt ${attempt + 1}: ${response.status}`)
+        // Do not throw error, return empty results
+        return { results: [] }
       }
 
       const data = await response.json()
       return { results: data.results || [] }
     } catch (error) {
+      console.error(`iNaturalist search failed (attempt ${attempt + 1}):`, error)
       if (attempt === retries) {
-        console.error("iNaturalist search failed:", error)
-        return { results: [] } // Fallback to empty results
+        console.error("iNaturalist search failed after multiple retries:", error)
+        return { results: [] }
       }
       // Wait before retry
       await new Promise((resolve) => setTimeout(resolve, 1000))
     }
   }
+
+  // Fallback to empty results if all retries fail
+  return { results: [] }
 }

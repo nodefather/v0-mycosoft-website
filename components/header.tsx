@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Search, Cloud, ShoppingBag, Bot, AppWindowIcon as Apps, User2 } from "lucide-react"
+import { Search, Cloud, ShoppingBag, Bot, User2, Database } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
@@ -73,9 +73,9 @@ export function Header() {
             </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/apps">
-              <Apps className="h-4 w-4 mr-2" />
-              Apps
+            <Link href="/natureos/apps/fungal-database">
+              <Database className="h-4 w-4 mr-2" />
+              Data
             </Link>
           </Button>
         </nav>
@@ -103,7 +103,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
                     <AvatarFallback>{user.name[0]}</AvatarFallback>
                   </Avatar>
                   <span className="hidden md:inline-block">{user.name}</span>
