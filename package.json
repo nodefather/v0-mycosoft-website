@@ -98,7 +98,8 @@
     "three": "latest",
     "geist": "latest",
     "@vercel/blob": "latest",
-    "node-fetch": "latest"
+    "node-fetch": "latest",
+    "child_process": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
