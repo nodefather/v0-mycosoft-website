@@ -20,6 +20,15 @@ export interface Fungi {
   taxonomy: TaxonomicClassification
 }
 
+export interface FungiImage {
+  id: number
+  fungiId: number
+  imageUrl: string
+  caption: string
+  isPrimary: boolean
+  createdAt: string
+}
+
 export interface FungiCharacteristics {
   id: number
   fungiId: number
@@ -44,15 +53,6 @@ export interface FungiCharacteristics {
   sporePrintColor: string
   population: string
   substrate: string
-}
-
-export interface FungiImage {
-  id: number
-  fungiId: number
-  imageUrl: string
-  caption: string
-  isPrimary: boolean
-  createdAt: string
 }
 
 export interface TaxonomicClassification {

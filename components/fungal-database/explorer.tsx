@@ -161,7 +161,7 @@ export function FungalDatabaseExplorer() {
                     <Image
                       src={
                         species.image_url ||
-                        `/placeholder.svg?height=200&width=300&query=${encodeURIComponent(species.scientific_name)}`
+                        `/placeholder.svg?height=200&width=300&query=${encodeURIComponent(species.scientific_name) || "/placeholder.svg"}`
                       }
                       alt={species.scientific_name}
                       fill

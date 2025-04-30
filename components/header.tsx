@@ -31,17 +31,13 @@ export function Header() {
   }
 
   return (
-    <header className="border-b bg-background sticky top-0 z-40">
-      <div className="container flex h-14 items-center justify-between">
+    <header className="border-b bg-background sticky top-0 z-40 w-full">
+      <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-2 font-semibold">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <div className="relative h-8 w-8">
               <Image
-                src={
-                  theme === "dark"
-                    ? "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Mycosoft%20Logo%20(1)-lArPx4fwtqahyHVlnRLWWSfqWLIJpv.png"
-                    : "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MycosoftLogo2%20(1)-5jx3SObDwKV9c6QmbxJ2NWopjhfLmZ.png"
-                }
+                src={theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
                 alt="Mycosoft Logo"
                 fill
                 className="object-contain"
@@ -53,7 +49,7 @@ export function Header() {
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-2 mx-auto">
+        <nav className="hidden md:flex items-center gap-4 mx-auto">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/">
               <Search className="h-4 w-4 mr-2" />

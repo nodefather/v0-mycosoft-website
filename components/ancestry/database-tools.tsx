@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { FungalDatabaseExplorer } from "@/components/fungal-database/explorer"
+// import { FungalDatabaseExplorer } from "@/components/fungal-database/explorer"
 
 interface Species {
   id: string
@@ -118,7 +118,6 @@ export function DatabaseTools() {
           )}
         </CardContent>
       </Card>
-      <FungalDatabaseExplorer />
     </div>
   )
 }

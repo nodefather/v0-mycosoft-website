@@ -96,10 +96,10 @@
     "azure-maps-control": "latest",
     "@ai-sdk/openai": "latest",
     "three": "latest",
-    "geist": "latest",
     "@vercel/blob": "latest",
     "node-fetch": "latest",
-    "child_process": "latest"
+    "child_process": "latest",
+    "geist": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
