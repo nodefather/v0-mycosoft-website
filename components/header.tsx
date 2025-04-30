@@ -37,7 +37,11 @@ export function Header() {
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <div className="relative h-8 w-8">
               <Image
-                src={theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
+                src={
+                  theme === "dark"
+                    ? "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Mycosoft%20Logo%20%281%29-MgpXlNVbdUz4dcCyn7KDwm5d8iyZAP.png" // Dark mode logo (white on black)
+                    : "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MycosoftLogo2%20%281%29-xROWyxHp25aKiDgPq9UA4kmT4JaGb4.png" // Light mode logo (black on white)
+                }
                 alt="Mycosoft Logo"
                 fill
                 className="object-contain"
