@@ -8,9 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Network, Activity, Zap, LineChart, Globe } from "lucide-react"
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
+import type { CircularProgressProps } from "@/components/dashboard/circular-progress"
 
-// Use dynamic import with explicit typing
-const CircularProgress = dynamic(
+const CircularProgressComponent = dynamic<CircularProgressProps>(
   () => import("@/components/dashboard/circular-progress").then((mod) => mod.CircularProgress),
   {
     ssr: false,
@@ -170,10 +170,10 @@ export default function MyceliumNetworkPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
-                    <CircularProgress value={78} icon={LineChart} label="Growth Rate" />
-                    <CircularProgress value={92} icon={Network} label="Network Health" />
-                    <CircularProgress value={64} icon={Activity} label="Active Nodes" />
-                    <CircularProgress value={45} icon={Zap} label="Energy Usage" />
+                    <CircularProgressComponent value={78} icon={LineChart} label="Growth Rate" />
+                    <CircularProgressComponent value={92} icon={Network} label="Network Health" />
+                    <CircularProgressComponent value={64} icon={Activity} label="Active Nodes" />
+                    <CircularProgressComponent value={45} icon={Zap} label="Energy Usage" />
                   </div>
                 </CardContent>
               </Card>
@@ -192,10 +192,9 @@ export default function MyceliumNetworkPage() {
                     <Activity className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">Network Health Visualization</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
           <TabsContent value="signals" className="space-y-5">
             <Card>
@@ -209,11 +208,10 @@ export default function MyceliumNetworkPage() {
                     <Zap className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">Signal Analysis Dashboard</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
       </div>
     </DashboardShell>
   )

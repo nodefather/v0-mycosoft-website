@@ -1,46 +1,76 @@
-export interface FungiSpecies {
-  id: string
-  commonName: string
+export interface Fungi {
+  id: number
   scientificName: string
+  commonName: string
+  family: string
+  genus: string
+  species: string
   description: string
-  taxonomy: {
-    kingdom: string
-    phylum: string
-    class: string
-    order: string
-    family: string
-    genus: string
-    species: string
-  }
-  characteristics?: {
-    habitat?: string[]
-    season?: string[]
-    edibility?: string
-    ecology?: string
-  }
-  compounds?: Array<{
-    id: string
-    name: string
-    concentration?: string
-  }>
-  images: Array<{
-    url: string
-    medium_url?: string
-    large_url?: string
-    attribution: string
-    license_code?: string
-    type?: "primary" | "specimen"
-    source_url?: string
-  }>
-  references: Array<{
-    title: string
-    url: string
-    type: "article" | "database" | "book"
-  }>
-  lastUpdated: string
-  interactions?: string[]
-  conservationStatus?: string
-  wikipedia_summary?: string
-  iNaturalistId?: string
-  type?: string
+  habitat: string
+  ecology: string
+  edibility: string
+  toxicity: string
+  season: string
+  distribution: string
+  notes: string
+  createdAt: string
+  updatedAt: string
+  characteristics: FungiCharacteristics
+  images: FungiImage[]
+  taxonomy: TaxonomicClassification
+}
+
+export interface FungiCharacteristics {
+  id: number
+  fungiId: number
+  capShape: string
+  capSurface: string
+  capColor: string
+  bruises: boolean
+  odor: string
+  gillAttachment: string
+  gillSpacing: string
+  gillColor: string
+  stalkShape: string
+  stalkRoot: string
+  stalkSurfaceAboveRing: string
+  stalkSurfaceBelowRing: string
+  stalkColorAboveRing: string
+  stalkColorBelowRing: string
+  veilType: string
+  veilColor: string
+  ringNumber: number
+  ringType: string
+  sporePrintColor: string
+  population: string
+  substrate: string
+}
+
+export interface FungiImage {
+  id: number
+  fungiId: number
+  imageUrl: string
+  caption: string
+  isPrimary: boolean
+  createdAt: string
+}
+
+export interface TaxonomicClassification {
+  id: number
+  fungiId: number
+  kingdom: string
+  phylum: string
+  class: string
+  orderName: string
+  family: string
+  genus: string
+  species: string
+}
+
+export type FungiFilterOptions = {
+  edibility?: string
+  habitat?: string
+  season?: string
+  family?: string
+  genus?: string
 }

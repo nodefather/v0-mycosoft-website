@@ -1,79 +1,64 @@
-// components/ancestry/biological-tools.tsx
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dna, Search, GitCompareArrows, FileText, Bot, BarChart } from "lucide-react"
+import Link from "next/link"
+
+const tools = [
+  {
+    name: "Phylogenetic Tree",
+    href: "/ancestry/phylogenetic-tree",
+    icon: Dna,
+    description: "Build and visualize evolutionary trees.",
+  },
+  {
+    name: "ITS Lookup",
+    href: "/ancestry/its-lookup",
+    icon: Search,
+    description: "Identify species using ITS sequences.",
+  },
+  {
+    name: "Sequence Alignment",
+    href: "/ancestry/sequence-alignment",
+    icon: GitCompareArrows,
+    description: "Compare multiple DNA/protein sequences.",
+  },
+  {
+    name: "Genome Annotation",
+    href: "/ancestry/genome-annotation",
+    icon: FileText,
+    description: "Annotate genomic features.",
+  },
+  {
+    name: "Interaction Prediction",
+    href: "/ancestry/interaction-prediction",
+    icon: Bot,
+    description: "Predict molecular interactions.",
+  },
+  {
+    name: "DNA Visualization",
+    href: "/ancestry/dna-visualization",
+    icon: BarChart,
+    description: "Visualize genetic data.",
+  },
+]
 
 export function BiologicalTools() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Biological Tools</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">Access commonly used biological tools for fungal taxonomy.</p>
-          <Button variant="outline" asChild>
-            <a href="https://blast.ncbi.nlm.nih.gov/Blast.cgi" target="_blank" rel="noopener noreferrer">
-              BLAST
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="http://www.clustal.org/" target="_blank" rel="noopener noreferrer">
-              ClustalW
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="https://mafft.cbrc.jp/alignment/software/" target="_blank" rel="noopener noreferrer">
-              MAFFT
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="https://www.r-project.org/" target="_blank" rel="noopener noreferrer">
-              R
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="https://www.python.org/" target="_blank" rel="noopener noreferrer">
-              Python
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="https://cytoscape.org/" target="_blank" rel="noopener noreferrer">
-              Cytoscape
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="https://www.htslib.org/" target="_blank" rel="noopener noreferrer">
-              Samtools
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="https://bedtools.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">
-              Bedtools
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a
-              href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              FastQC
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="https://www.ensembl.org/index.html" target="_blank" rel="noopener noreferrer">
-              Ensembl
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="https://www.uniprot.org/" target="_blank" rel="noopener noreferrer">
-              UniProt
-            </a>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {tools.map((tool) => (
+        <Link href={tool.href} key={tool.name}>
+          <Card className="hover:bg-muted/50 transition-colors h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{tool.name}</CardTitle>
+              <tool.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">{tool.description}</p>
+            </CardContent>
+          </Card>
+        </Link>
+      ))}
+    </div>
   )
 }
