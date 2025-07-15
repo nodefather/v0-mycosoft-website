@@ -126,4 +126,4 @@ export async function POST(request) {
     console.error('Dashboard POST error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-} 
+}

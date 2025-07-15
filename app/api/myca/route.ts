@@ -224,4 +224,4 @@ export async function PUT(request) {
     console.error('MYCA PUT error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-} 
+}

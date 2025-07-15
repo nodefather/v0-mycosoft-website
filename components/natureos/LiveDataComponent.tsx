@@ -237,4 +237,4 @@ function StatCard({ title, value, change, icon }) {
       </div>
     </motion.div>
   );
-} 
+}

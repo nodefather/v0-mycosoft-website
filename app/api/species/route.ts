@@ -1,8 +1,29 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 
-// Initialize the SQL client with the database URL
-const sql = neon(process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || "")
+// ---------------------------------------------------------------------------
+// Safe Neon client helper
+// ---------------------------------------------------------------------------
+let sql: ReturnType<typeof neon> | null = null
+
+function getSqlClient() {
+  if (sql) return sql
+
+  const url = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL || ""
+  // Basic validation: Neon URL must start with "postgres://" or "postgresql://"
+  const isValid = /^postgres(?:ql)?:\/\/.+/.test(url)
+
+  if (!isValid) {
+    console.error(
+      "🛑 NEON_DATABASE_URL (or DATABASE_URL) is missing or invalid. " +
+        "Skipping DB connection. Provide a valid connection string to enable data.",
+    )
+    return null
+  }
+
+  sql = neon(url)
+  return sql
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +32,12 @@ export async function GET(request: NextRequest) {
 
     if (id) {
       // Get a single species by ID
-      const species = await sql`
+      const client = getSqlClient()
+      if (!client) {
+        return NextResponse.json({ error: "Database not configured" }, { status: 500 })
+      }
+
+      const species = await client`
         SELECT * FROM species WHERE id = ${Number.parseInt(id, 10)}
       `
 
@@ -29,9 +55,14 @@ export async function GET(request: NextRequest) {
     const limit = Number.parseInt(searchParams.get("limit") || "9", 10)
     const offset = (page - 1) * limit
 
+    const client = getSqlClient()
+    if (!client) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 })
+    }
+
     // Count total matching species
     const searchPattern = `%${search}%`
-    const countResult = await sql`
+    const countResult = await client`
       SELECT COUNT(*) as total
       FROM species
       WHERE 
@@ -51,7 +82,7 @@ export async function GET(request: NextRequest) {
     // Using tagged template syntax for dynamic sorting
     let species
     if (sortField === "scientific_name") {
-      species = await sql`
+      species = await client`
         SELECT *
         FROM species
         WHERE 
@@ -63,7 +94,7 @@ export async function GET(request: NextRequest) {
         LIMIT ${limit} OFFSET ${offset}
       `
     } else if (sortField === "common_name") {
-      species = await sql`
+      species = await client`
         SELECT *
         FROM species
         WHERE 
@@ -75,7 +106,7 @@ export async function GET(request: NextRequest) {
         LIMIT ${limit} OFFSET ${offset}
       `
     } else {
-      species = await sql`
+      species = await client`
         SELECT *
         FROM species
         WHERE 

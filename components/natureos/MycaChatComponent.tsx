@@ -300,4 +300,4 @@ export default function MycaChatComponent() {
       </div>
     </div>
   );
-} 
+}
