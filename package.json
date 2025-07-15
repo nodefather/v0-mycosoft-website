@@ -37,6 +37,7 @@
     "framer-motion": "latest",
     "fs": "latest",
     "gel": "latest",
+    "gsap": "latest",
     "knex": "latest",
     "kysely": "latest",
     "leaflet": "latest",

@@ -25,7 +25,7 @@ interface SpeciesListProps {
 }
 
 function SpeciesList({ species }: SpeciesListProps) {
-  if (species.length === 0) {
+  if (!species || species.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <p>No species found matching your criteria.</p>
@@ -75,7 +75,7 @@ function SpeciesList({ species }: SpeciesListProps) {
             </div>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-bold">
-                <Link href={`/ancestry/explorer/${s.id}`} className="hover:underline">
+                <Link href={`/ancestry/fungal-database/${s.id}`} className="hover:underline">
                   {s.scientific_name}
                 </Link>
               </CardTitle>
@@ -87,14 +87,10 @@ function SpeciesList({ species }: SpeciesListProps) {
                   <p className="font-medium text-sm">Family:</p>
                   <p className="text-sm text-muted-foreground">{s.family}</p>
                 </div>
-                <div>
-                  <p className="font-medium text-sm">Description:</p>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{s.description}</p>
-                </div>
               </div>
               <div className="mt-4">
                 <Link
-                  href={`/ancestry/explorer/${s.id}`}
+                  href={`/ancestry/fungal-database/${s.id}`}
                   className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
                 >
                   View Details →
@@ -168,7 +164,7 @@ export function SpeciesExplorer() {
           throw new Error(data.message || "An error occurred while fetching data.")
         }
 
-        setSpecies(Array.isArray(data.species) ? data.species : [])
+        setSpecies(Array.isArray(data.fungi) ? data.fungi : [])
         setTotalPages(data.totalPages || 1)
       } catch (e: any) {
         setError(e.message)

@@ -1,15 +1,6 @@
 import { neon } from "@neondatabase/serverless"
-import type { Fungi } from "@/types/fungi"
 
-/**
- * Singleton Neon client.
- * NOTE: `NEON_DATABASE_URL` must be set (starts with postgresql:// or postgres://).
- */
 const sql = neon(process.env.NEON_DATABASE_URL || "")
-
-/* -------------------------------------------------------------------------- */
-/*                               Paginated list                               */
-/* -------------------------------------------------------------------------- */
 
 export async function getFungiPaginated({
   query,
@@ -31,7 +22,6 @@ export async function getFungiPaginated({
   const limitNum = limit && limit > 0 ? limit : 9
   const offset = (pageNum - 1) * limitNum
 
-  /* ---------- build WHERE clause + params ---------- */
   let whereClause = "WHERE 1=1"
   const params: any[] = []
 
@@ -44,12 +34,10 @@ export async function getFungiPaginated({
     params.push(`%${query}%`)
   }
 
-  /* ---------- sorting ---------- */
   const validSortColumns = ["scientific_name", "common_name", "family"]
   const sortColumn = validSortColumns.includes(sort || "") ? sort : "scientific_name"
   const orderByClause = `ORDER BY ${sortColumn} ASC`
 
-  /* ---------- main & count queries ---------- */
   const dataQuery = `
     SELECT id,
            scientific_name,
@@ -64,26 +52,15 @@ export async function getFungiPaginated({
       LIMIT  $${params.length + 1}
       OFFSET $${params.length + 2};
   `
-
-  const countQuery = `
-    SELECT COUNT(*)::int AS count
-      FROM species
-      ${whereClause};
-  `
-
+  const countQuery = `SELECT COUNT(*)::int AS count FROM species ${whereClause};`
   const dataParams = [...params, limitNum, offset]
   const countParams = [...params]
 
   try {
-    /* neon.sql & neon.unsafe return the rows array directly */
-    const [rawFungi, rawCount] = await Promise.all([
+    const [fungiRows, countRows] = await Promise.all([
       sql.unsafe(dataQuery, dataParams),
       sql.unsafe(countQuery, countParams),
     ])
-
-    //  neon always returns an array, but if it ever returns a QueryResult, fall back to .rows
-    const fungiRows: any[] = Array.isArray(rawFungi) ? rawFungi : ((rawFungi as any)?.rows ?? [])
-    const countRows: any[] = Array.isArray(rawCount) ? rawCount : ((rawCount as any)?.rows ?? [])
 
     const total = countRows[0]?.count ?? 0
     const totalPages = Math.max(1, Math.ceil(total / limitNum))
@@ -95,54 +72,16 @@ export async function getFungiPaginated({
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/*                            Single-species detail                           */
-/* -------------------------------------------------------------------------- */
-
-export async function getFungiById(id: number): Promise<Fungi | null> {
+export async function getFungiById(id: number): Promise<any | null> {
   try {
-    const [fungi] = await sql<Fungi[]>`
-      SELECT * FROM fungi WHERE id = ${id};
+    const results = await sql`
+      SELECT * FROM species WHERE id = ${id};
     `
-    if (!fungi) return null
-
-    const [characteristics] = await sql<any[]>`
-      SELECT * FROM fungi_characteristics WHERE fungi_id = ${id};
-    `
-    const images = await sql<any[]>`
-      SELECT * FROM fungi_images WHERE fungi_id = ${id} ORDER BY is_primary DESC;
-    `
-    const [taxonomy] = await sql<any[]>`
-      SELECT * FROM taxonomic_classification WHERE fungi_id = ${id};
-    `
-
-    return {
-      ...fungi,
-      characteristics: characteristics ?? {},
-      images: images ?? [],
-      taxonomy: taxonomy ?? {},
-    } as Fungi
+    if (results.length === 0) return null
+    // Assuming the structure of species table matches what FungiProfile expects
+    return results[0]
   } catch (error) {
     console.error(`🛑 Error fetching fungi with ID ${id}:`, error)
     return null
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/*                           Helper: distinct values                          */
-/* -------------------------------------------------------------------------- */
-
-export async function getUniqueValues(field: string) {
-  try {
-    const result = await sql<any[]>`
-      SELECT DISTINCT ${sql(field)} AS value
-        FROM fungi
-       WHERE ${sql(field)} IS NOT NULL
-       ORDER BY value ASC;
-    `
-    return result.map((row) => row.value)
-  } catch (error) {
-    console.error(`🛑 Error getting unique values for ${field}:`, error)
-    return []
   }
 }

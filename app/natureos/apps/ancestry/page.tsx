@@ -4,8 +4,9 @@ import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardShell } from "@/components/dashboard/shell"
 import { AncestryTabs } from "@/components/ancestry/ancestry-tabs"
 import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 
-export default function AncestryPageWrapper() {
+function AncestryPageContent() {
   const searchParams = useSearchParams()
   const defaultTab = searchParams.get("tab") || "overview"
 
@@ -19,5 +20,13 @@ export default function AncestryPageWrapper() {
         <AncestryTabs defaultTab={defaultTab} />
       </div>
     </DashboardShell>
+  )
+}
+
+export default function AncestryPageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AncestryPageContent />
+    </Suspense>
   )
 }
