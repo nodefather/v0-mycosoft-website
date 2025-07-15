@@ -12,8 +12,8 @@ export default function ErrorClient({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  // Send the error to your monitoring service
   useEffect(() => {
-    // Log to your preferred monitoring service
     console.error("Application error:", error)
   }, [error])
 
@@ -27,14 +27,16 @@ export default function ErrorClient({
           </div>
           <CardDescription>{error.message || "An unexpected error occurred. Please try again."}</CardDescription>
         </CardHeader>
+
         <CardContent>
-          {error.digest && <p className="text-sm text-muted-foreground">Error ID: {error.digest}</p>}
+          {error.digest && <p className="text-sm text-muted-foreground">Error ID:&nbsp;{error.digest}</p>}
         </CardContent>
+
         <CardFooter className="flex justify-between">
           <Button variant="ghost" onClick={() => (window.location.href = "/")}>
             Go&nbsp;Home
           </Button>
-          {/* reset() will re-attempt to render the segment that errored */}
+          {/* `reset()` re-renders the segment that threw */}
           <Button onClick={() => reset()}>Try&nbsp;Again</Button>
         </CardFooter>
       </Card>

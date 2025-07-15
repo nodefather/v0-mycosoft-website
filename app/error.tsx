@@ -1,13 +1,4 @@
-;/>
-\
-1. **Delete** the top line `"use client"` – the file must be a Server Component.
-\
-2. **Replace** the entire component
-with
-:\
-
-```tsx
-// Global error boundary (Server Component)
+// Global error boundary ─ Server Component (NO "use client")
 import ErrorClient from "@/components/error-client"
 
 export default function GlobalError({
@@ -17,6 +8,6 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  // Forward everything to a Client component for interactivity
+  // Forward the error data and reset callback to the client component
   return <ErrorClient error={error} reset={reset} />
 }
