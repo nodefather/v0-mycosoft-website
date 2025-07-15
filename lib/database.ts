@@ -35,7 +35,7 @@ export async function getFungiPaginated({
   const sortColumn = validSortColumns.includes(sort || "") ? sort : "scientific_name"
   const orderByClause = `ORDER BY ${sortColumn} ASC`
 
-  const dataQuery = `SELECT id, scientific_name, common_name, family, description, image_url, characteristics FROM species ${whereClause} ${orderByClause} LIMIT $${
+  const dataQuery = `SELECT id, scientific_name, common_name, family, image_url FROM species ${whereClause} ${orderByClause} LIMIT $${
     params.length + 1
   } OFFSET $${params.length + 2}`
   const countQuery = `SELECT COUNT(*) FROM species ${whereClause}`
@@ -67,28 +67,28 @@ export async function getFungiPaginated({
 
 export async function getFungiById(id: number): Promise<Fungi | null> {
   try {
-    const [fungi] = await sql<Fungi[]>`
+    const [fungi] = await sql<any[]>`
       SELECT * FROM fungi WHERE id = ${id}
     `
 
     if (!fungi) return null
 
-    const [characteristics] = await sql`
+    const [characteristics] = await sql<any[]>`
       SELECT * FROM fungi_characteristics WHERE fungi_id = ${id}
     `
-    const images = await sql`
+    const images = await sql<any[]>`
       SELECT * FROM fungi_images WHERE fungi_id = ${id} ORDER BY is_primary DESC
     `
-    const [taxonomy] = await sql`
+    const [taxonomy] = await sql<any[]>`
       SELECT * FROM taxonomic_classification WHERE fungi_id = ${id}
     `
 
     return {
       ...fungi,
-      characteristics,
-      images,
-      taxonomy,
-    }
+      characteristics: characteristics || {},
+      images: images || [],
+      taxonomy: taxonomy || {},
+    } as Fungi
   } catch (error) {
     console.error(`Error fetching fungi with ID ${id}:`, error)
     return null
