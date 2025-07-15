@@ -8,6 +8,7 @@ import { Cloud, Code, Database, FileText, Gauge, Globe, PipetteIcon, Settings } 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DashboardShell } from "@/components/dashboard/shell"
+import LiveDataComponent from "@/components/natureos/LiveDataComponent"
 
 const appWidgets = [
   {
@@ -120,6 +121,12 @@ export default function NatureOSPage() {
               </Link>
             ))}
           </div>
+        </section>
+
+        {/* Live Data */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Live Data</h2>
+          <LiveDataComponent />
         </section>
       </div>
     </DashboardShell>
