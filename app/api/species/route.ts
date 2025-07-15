@@ -5,10 +5,15 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get("search") || ""
-    // Default to camelCase to match the client
     const sort = searchParams.get("sort") || "scientificName"
     const page = Number.parseInt(searchParams.get("page") || "1", 10)
     const limit = Number.parseInt(searchParams.get("limit") || "9", 10)
+
+    const filters = {
+      edibility: searchParams.get("edibility") || undefined,
+      habitat: searchParams.get("habitat") || undefined,
+      capShape: searchParams.get("capShape") || undefined,
+    }
 
     if (isNaN(page) || isNaN(limit)) {
       return NextResponse.json({ ok: false, message: "Invalid page or limit parameter" }, { status: 400 })
@@ -19,6 +24,7 @@ export async function GET(request: Request) {
       sort,
       page,
       limit,
+      filters,
     })
 
     return NextResponse.json({

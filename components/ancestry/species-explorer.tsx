@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Search, AlertTriangle } from "lucide-react"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Search, AlertTriangle, SlidersHorizontal, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
@@ -20,11 +21,13 @@ interface Species {
   edibility: string
 }
 
-interface SpeciesListProps {
-  species: Species[]
+interface FilterOptions {
+  edibility: string[]
+  habitat: string[]
+  capShape: string[]
 }
 
-function SpeciesList({ species }: SpeciesListProps) {
+function SpeciesList({ species }: { species: Species[] }) {
   if (!species || species.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -32,7 +35,6 @@ function SpeciesList({ species }: SpeciesListProps) {
       </div>
     )
   }
-
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {species.map((s) => {
@@ -75,14 +77,8 @@ function SpeciesList({ species }: SpeciesListProps) {
             </CardHeader>
             <CardContent className="pb-4 flex-grow flex flex-col justify-between">
               <div>
-                <div className="mb-2">
-                  <p className="font-medium text-sm">Family:</p>
-                  <p className="text-sm text-muted-foreground">{s.family}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Description:</p>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{s.description}</p>
-                </div>
+                <p className="font-medium text-sm">Family:</p>
+                <p className="text-sm text-muted-foreground">{s.family}</p>
               </div>
               <div className="mt-4">
                 <Link
@@ -111,7 +107,6 @@ function SpeciesExplorerSkeleton() {
             <Skeleton className="h-4 w-1/2 mt-2" />
           </CardHeader>
           <CardContent>
-            <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-full" />
           </CardContent>
         </Card>
@@ -129,7 +124,26 @@ export function SpeciesExplorer() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [sort, setSort] = useState("scientificName")
+  const [filters, setFilters] = useState({ edibility: "", habitat: "", capShape: "" })
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ edibility: [], habitat: [], capShape: [] })
+  const [isLoadingFilters, setIsLoadingFilters] = useState(true)
   const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        setIsLoadingFilters(true)
+        const response = await fetch("/api/species/filters")
+        const data = await response.json()
+        setFilterOptions(data)
+      } catch (e) {
+        console.error("Failed to fetch filter options", e)
+      } finally {
+        setIsLoadingFilters(false)
+      }
+    }
+    fetchFilterOptions()
+  }, [])
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -150,15 +164,14 @@ export function SpeciesExplorer() {
           page: page.toString(),
           limit: "9",
         })
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) params.append(key, value)
+        })
 
         const response = await fetch(`/api/species?${params.toString()}`)
         const data = await response.json()
-
-        if (!data.ok) {
-          throw new Error(data.message || "An error occurred while fetching data.")
-        }
-
-        setSpecies(Array.isArray(data.species) ? data.species : [])
+        if (!data.ok) throw new Error(data.message || "An error occurred.")
+        setSpecies(data.species || [])
         setTotalPages(data.totalPages || 1)
       } catch (e: any) {
         setError(e.message)
@@ -166,17 +179,26 @@ export function SpeciesExplorer() {
         setIsLoading(false)
       }
     }
+    startTransition(fetchData)
+  }, [debouncedQuery, page, sort, filters])
 
-    startTransition(() => {
-      fetchData()
-    })
-  }, [debouncedQuery, page, sort])
+  const handleFilterChange = (filterName: keyof typeof filters, value: string) => {
+    setFilters((prev) => ({ ...prev, [filterName]: value }))
+    setPage(1)
+  }
+
+  const clearFilters = () => {
+    setFilters({ edibility: "", habitat: "", capShape: "" })
+    setPage(1)
+  }
+
+  const areFiltersActive = Object.values(filters).some((v) => v !== "")
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Search Controls</CardTitle>
+          <CardTitle>Search & Filter</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
@@ -190,7 +212,7 @@ export function SpeciesExplorer() {
                 className="pl-10"
               />
             </div>
-            <Select value={sort} onValueChange={setSort}>
+            <Select value={sort} onValueChange={(v) => setSort(v)}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -201,6 +223,71 @@ export function SpeciesExplorer() {
               </SelectContent>
             </Select>
           </div>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="advanced-filters">
+              <AccordionTrigger>
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Advanced Filters
+                  {areFiltersActive && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4">
+                {isLoadingFilters ? (
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Select value={filters.edibility} onValueChange={(v) => handleFilterChange("edibility", v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filter by Edibility" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.edibility.map((opt) => (
+                          <SelectItem key={opt} value={opt}>
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={filters.habitat} onValueChange={(v) => handleFilterChange("habitat", v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filter by Habitat" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.habitat.map((opt) => (
+                          <SelectItem key={opt} value={opt}>
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={filters.capShape} onValueChange={(v) => handleFilterChange("capShape", v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filter by Cap Shape" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.capShape.map((opt) => (
+                          <SelectItem key={opt} value={opt}>
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {areFiltersActive && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="mt-4">
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Filters
+                  </Button>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
 
@@ -217,17 +304,13 @@ export function SpeciesExplorer() {
 
       {totalPages > 1 && !isLoading && !isPending && (
         <div className="flex justify-between items-center">
-          <Button variant="outline" disabled={page === 1} onClick={() => setPage((prev) => Math.max(prev - 1, 1))}>
+          <Button variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
             Previous
           </Button>
           <p className="text-sm text-muted-foreground">
             Page {page} of {totalPages}
           </p>
-          <Button
-            variant="outline"
-            disabled={page === totalPages}
-            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-          >
+          <Button variant="outline" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
             Next
           </Button>
         </div>
