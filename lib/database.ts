@@ -3,7 +3,7 @@ import type { Fungi } from "@/types/fungi"
 
 const sql = neon(process.env.NEON_DATABASE_URL || "")
 
-// Helper to convert snake_case keys to camelCase
+// Helper to convert snake_case keys from DB to camelCase for client
 const toCamelCase = (obj: any): any => {
   if (Array.isArray(obj)) {
     return obj.map((v) => toCamelCase(v))
@@ -17,6 +17,9 @@ const toCamelCase = (obj: any): any => {
   }
   return obj
 }
+
+// Helper to convert camelCase sort key from client to snake_case for DB
+const toSnakeCase = (str: string) => str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
 
 export async function getFungiPaginated({
   query,
@@ -38,9 +41,9 @@ export async function getFungiPaginated({
   const limitNum = limit && limit > 0 ? limit : 9
   const offset = (pageNum - 1) * limitNum
 
+  // Build WHERE clause for search
   let whereClause = "WHERE 1=1"
   const params: any[] = []
-
   if (query) {
     whereClause += ` AND (
       scientific_name ILIKE $${params.length + 1} OR
@@ -50,10 +53,13 @@ export async function getFungiPaginated({
     params.push(`%${query}%`)
   }
 
+  // Build ORDER BY clause for sorting, converting client key to DB key
+  const snakeCaseSort = sort ? toSnakeCase(sort) : "scientific_name"
   const validSortColumns = ["scientific_name", "common_name", "family"]
-  const sortColumn = validSortColumns.includes(sort || "") ? sort : "scientific_name"
+  const sortColumn = validSortColumns.includes(snakeCaseSort) ? snakeCaseSort : "scientific_name"
   const orderByClause = `ORDER BY ${sortColumn} ASC`
 
+  // Build the main data and count queries
   const dataQuery = `
     SELECT id,
            scientific_name,
@@ -61,7 +67,6 @@ export async function getFungiPaginated({
            family,
            description,
            image_url,
-           characteristics,
            edibility
       FROM species
       ${whereClause}
@@ -70,6 +75,7 @@ export async function getFungiPaginated({
       OFFSET $${params.length + 2};
   `
   const countQuery = `SELECT COUNT(*)::int AS count FROM species ${whereClause};`
+
   const dataParams = [...params, limitNum, offset]
   const countParams = [...params]
 
@@ -82,10 +88,12 @@ export async function getFungiPaginated({
     const total = (countRows[0] as any)?.count ?? 0
     const totalPages = Math.max(1, Math.ceil(total / limitNum))
 
+    // Return data with camelCase keys for the client
     return { fungi: toCamelCase(fungiRows), total, totalPages, page: pageNum }
   } catch (error) {
     console.error("🛑 Error fetching paginated fungi:", error)
-    return { fungi: [], total: 0, totalPages: 1, page: 1 }
+    // Propagate the error to be handled by the API route
+    throw new Error("Database query failed.")
   }
 }
 
@@ -99,11 +107,7 @@ export async function getFungiById(id: number): Promise<Fungi | null> {
       SELECT * FROM species WHERE id = ${id};
     `
     if (results.length === 0) return null
-
-    const fungiData = results[0]
-
-    // The toCamelCase function will handle the conversion
-    return toCamelCase(fungiData) as Fungi
+    return toCamelCase(results[0]) as Fungi
   } catch (error) {
     console.error(`🛑 Error fetching fungi with ID ${id}:`, error)
     return null

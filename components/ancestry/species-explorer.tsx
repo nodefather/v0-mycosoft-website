@@ -152,11 +152,11 @@ export function SpeciesExplorer() {
         })
 
         const response = await fetch(`/api/species?${params.toString()}`)
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: "An unknown error occurred." }))
-          throw new Error(errorData.message || "Failed to fetch data.")
-        }
         const data = await response.json()
+
+        if (!data.ok) {
+          throw new Error(data.message || "An error occurred while fetching data.")
+        }
 
         setSpecies(Array.isArray(data.species) ? data.species : [])
         setTotalPages(data.totalPages || 1)

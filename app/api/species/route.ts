@@ -2,13 +2,18 @@ import { NextResponse } from "next/server"
 import { getFungiPaginated } from "@/lib/database"
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const query = searchParams.get("search") || ""
-  const sort = searchParams.get("sort") || "scientific_name"
-  const page = Number.parseInt(searchParams.get("page") || "1", 10)
-  const limit = Number.parseInt(searchParams.get("limit") || "9", 10)
-
   try {
+    const { searchParams } = new URL(request.url)
+    const query = searchParams.get("search") || ""
+    // Default to camelCase to match the client
+    const sort = searchParams.get("sort") || "scientificName"
+    const page = Number.parseInt(searchParams.get("page") || "1", 10)
+    const limit = Number.parseInt(searchParams.get("limit") || "9", 10)
+
+    if (isNaN(page) || isNaN(limit)) {
+      return NextResponse.json({ ok: false, message: "Invalid page or limit parameter" }, { status: 400 })
+    }
+
     const { fungi, total, totalPages } = await getFungiPaginated({
       query,
       sort,
@@ -25,11 +30,12 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error("API Error fetching species:", error)
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
     return NextResponse.json(
       {
         ok: false,
         message: "Failed to fetch species data",
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
       },
       { status: 500 },
     )
