@@ -168,7 +168,7 @@ export function SpeciesExplorer() {
           throw new Error(data.message || "An error occurred while fetching data.")
         }
 
-        setSpecies(data.species || [])
+        setSpecies(Array.isArray(data.species) ? data.species : [])
         setTotalPages(data.totalPages || 1)
       } catch (e: any) {
         setError(e.message)
@@ -226,7 +226,11 @@ export function SpeciesExplorer() {
         </Card>
       )}
 
-      {isLoading || isPending ? <SpeciesExplorerSkeleton /> : <SpeciesList species={species} />}
+      {isLoading || isPending ? (
+        <SpeciesExplorerSkeleton />
+      ) : (
+        <SpeciesList species={Array.isArray(species) ? species : []} />
+      )}
 
       {totalPages > 1 && (
         <div className="flex justify-between items-center">

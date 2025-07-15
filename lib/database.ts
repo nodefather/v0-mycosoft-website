@@ -76,10 +76,14 @@ export async function getFungiPaginated({
 
   try {
     /* neon.sql & neon.unsafe return the rows array directly */
-    const [fungiRows, countRows] = await Promise.all([
+    const [rawFungi, rawCount] = await Promise.all([
       sql.unsafe(dataQuery, dataParams),
       sql.unsafe(countQuery, countParams),
     ])
+
+    //  neon always returns an array, but if it ever returns a QueryResult, fall back to .rows
+    const fungiRows: any[] = Array.isArray(rawFungi) ? rawFungi : ((rawFungi as any)?.rows ?? [])
+    const countRows: any[] = Array.isArray(rawCount) ? rawCount : ((rawCount as any)?.rows ?? [])
 
     const total = countRows[0]?.count ?? 0
     const totalPages = Math.max(1, Math.ceil(total / limitNum))
