@@ -55,3 +55,6 @@ export const diffuseAndDecay = (field: number[][], diffusionRate: number, decayR
 
   return newField
 }
+
+// Alias for backward-compatibility
+export const diffuseChemicals = diffuseAndDecay
