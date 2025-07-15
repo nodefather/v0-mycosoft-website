@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useRef, useState, useCallback } from "react"
 import * as THREE from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
@@ -81,24 +80,17 @@ const ControlPanel = ({
 const SpeciesDetailPanel = ({ node, onClose }: { node: Node; onClose: () => void }) => {
   const [aiModel, setAiModel] = useState("openai")
   const {
+    complete,
     completion,
     isLoading: isAiLoading,
-    handleSubmit,
   } = useCompletion({
     api: "/api/ai/ancestry-insights",
-    body: { model: aiModel },
   })
 
-  const handleGenerateInsights = () => {
-    const e = new Event("submit", { bubbles: true, cancelable: true })
-    const form = document.createElement("form")
-    const input = document.createElement("input")
-    input.name = "prompt"
-    input.value = node.name
-    form.appendChild(input)
-    form.addEventListener("submit", handleSubmit)
-    form.dispatchEvent(e)
-  }
+  const handleGenerateInsights = useCallback(() => {
+    if (!node || isAiLoading) return
+    complete(node.name, { body: { model: aiModel } })
+  }, [node, aiModel, isAiLoading, complete])
 
   return (
     <Card className="absolute top-4 right-4 w-96 max-h-[calc(100%-2rem)] flex flex-col bg-gray-800/80 backdrop-blur-sm border-gray-700 text-white z-10">
@@ -186,6 +178,7 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
   const [showInstructions, setShowInstructions] = useState(true)
   const sceneRef = useRef<any>(null)
   const allNodesRef = useRef<Node[]>([])
+  const selectionGlowRef = useRef<THREE.Mesh | null>(null)
 
   const fetchData = useCallback(async (rootId: number) => {
     try {
@@ -226,6 +219,12 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
         z: targetPosition.z,
         ease: "power3.inOut",
       })
+      if (selectionGlowRef.current) {
+        selectionGlowRef.current.position.copy(targetPosition)
+        selectionGlowRef.current.visible = true
+        gsap.fromTo(selectionGlowRef.current.scale, { x: 1, y: 1, z: 1 }, { x: 1.5, y: 1.5, z: 1.5, duration: 0.5 })
+        gsap.to(selectionGlowRef.current.material, { opacity: 0.8, duration: 0.5 })
+      }
     }
   }, [])
 
@@ -241,30 +240,26 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
     (treeData: Node) => {
       if (!sceneRef.current) return
       const { scene, camera } = sceneRef.current
-      while (scene.children.length > 0) scene.remove(scene.children[0])
-      scene.add(new THREE.AmbientLight(0xcccccc, 0.8))
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1.5)
-      dirLight.position.set(10, 10, 10)
-      scene.add(dirLight)
+      while (scene.children.length > 2) scene.remove(scene.children[2]) // Keep light and particles
 
       const nodes: Node[] = []
-      const lines: THREE.Line[] = []
       const textureLoader = new THREE.TextureLoader()
 
       function traverse(node: Node, depth = 0, parentPos: THREE.Vector3 | null = null, angle = 0, radius = 0) {
-        const position = new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, -depth * 12)
+        const position = new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, -depth * 15)
         node.position = position
         nodes.push(node)
         if (parentPos) {
-          const points = [parentPos, position]
-          const geometry = new THREE.BufferGeometry().setFromPoints(points)
-          const material = new THREE.LineBasicMaterial({ color: 0x4b5563, transparent: true, opacity: 0.6 })
-          lines.push(new THREE.Line(geometry, material))
+          const curve = new THREE.LineCurve3(parentPos, position)
+          const geometry = new THREE.TubeGeometry(curve, 2, 0.03, 8, false)
+          const material = new THREE.MeshBasicMaterial({ color: 0x4b5563, transparent: true, opacity: 0.5 })
+          const tube = new THREE.Mesh(geometry, material)
+          scene.add(tube)
         }
         if (node.children) {
           const angleStep = (Math.PI * 1.8) / (node.children.length > 1 ? node.children.length - 1 : 1) - Math.PI * 0.9
           node.children.forEach((child, i) =>
-            traverse(child, depth + 1, position, angle + i * angleStep, depth * 6 + 8),
+            traverse(child, depth + 1, position, angle + i * angleStep, depth * 8 + 10),
           )
         }
       }
@@ -272,28 +267,28 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
       allNodesRef.current = nodes
 
       nodes.forEach((node) => {
-        const isLeaf = !node.children || node.children.length === 0
+        const group = new THREE.Group()
         const imageUrl = node.image_url || `/placeholder.svg?height=64&width=64&query=${node.name.replace(/\s/g, "+")}`
         const map = textureLoader.load(imageUrl)
-        const material = new THREE.SpriteMaterial({ map: map, color: 0xffffff, fog: true })
-        const sprite = new THREE.Sprite(material)
-        sprite.scale.set(isLeaf ? 1.5 : 1, isLeaf ? 1.5 : 1, 1)
-        sprite.position.copy(node.position!)
-        sprite.userData = { node }
-        scene.add(sprite)
-        node.object = sprite
+        const circleGeom = new THREE.CircleGeometry(1, 32)
+        const material = new THREE.MeshBasicMaterial({ map, transparent: true, side: THREE.DoubleSide })
+        const circle = new THREE.Mesh(circleGeom, material)
+        group.add(circle)
+        group.position.copy(node.position!)
+        group.userData = { node }
+        scene.add(group)
+        node.object = group
 
         const labelDiv = document.createElement("div")
         labelDiv.className = "text-white text-xs bg-gray-900/60 px-2 py-1 rounded-md pointer-events-none select-none"
         labelDiv.textContent = node.name
         const label = new CSS2DObject(labelDiv)
         label.position.copy(node.position!)
-        label.position.y += 1.2
+        label.position.y += 1.5
         scene.add(label)
         node.labelObject = label
       })
-      lines.forEach((line) => scene.add(line))
-      gsap.from(camera.position, { duration: 2, z: 200, ease: "power3.out" })
+      gsap.from(camera.position, { duration: 2, z: 250, ease: "power3.out" })
 
       const raycaster = new THREE.Raycaster()
       const mouse = new THREE.Vector2()
@@ -303,10 +298,10 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
         mouse.x = ((event.clientX - rect.left) / containerRef.current.clientWidth) * 2 - 1
         mouse.y = -((event.clientY - rect.top) / containerRef.current.clientHeight) * 2 + 1
         raycaster.setFromCamera(mouse, sceneRef.current.camera)
-        const intersects = raycaster.intersectObjects(scene.children)
+        const intersects = raycaster.intersectObjects(scene.children, true)
         for (const intersect of intersects) {
-          if (intersect.object.userData.node) {
-            handleNodeClick(intersect.object.userData.node)
+          if (intersect.object.parent?.userData.node) {
+            handleNodeClick(intersect.object.parent.userData.node)
             return
           }
         }
@@ -321,8 +316,8 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
     if (!containerRef.current) return
     const container = containerRef.current
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x111827)
-    scene.fog = new THREE.Fog(0x111827, 50, 150)
+    scene.background = new THREE.Color(0x0c0a09) // stone-950
+    scene.fog = new THREE.Fog(0x0c0a09, 75, 200)
     const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000)
     camera.position.z = 100
     const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -339,11 +334,49 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
     controls.enableDamping = true
     controls.dampingFactor = 0.05
     controls.minDistance = 5
-    controls.maxDistance = 120
+    controls.maxDistance = 150
+    scene.add(new THREE.AmbientLight(0xcccccc, 0.8))
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5)
+    dirLight.position.set(10, 10, 10)
+    scene.add(dirLight)
+
+    // Particle System
+    const particlesGeom = new THREE.BufferGeometry()
+    const particlesCnt = 5000
+    const posArray = new Float32Array(particlesCnt * 3)
+    for (let i = 0; i < particlesCnt * 3; i++) {
+      posArray[i] = (Math.random() - 0.5) * 400
+    }
+    particlesGeom.setAttribute("position", new THREE.BufferAttribute(posArray, 3))
+    const particlesMat = new THREE.PointsMaterial({ size: 0.05, color: 0x666666 })
+    const particleMesh = new THREE.Points(particlesGeom, particlesMat)
+    scene.add(particleMesh)
+
+    // Selection Glow
+    const glowGeom = new THREE.RingGeometry(1.2, 1.5, 32)
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0x0ea5e9,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0,
+    })
+    selectionGlowRef.current = new THREE.Mesh(glowGeom, glowMat)
+    selectionGlowRef.current.visible = false
+    scene.add(selectionGlowRef.current)
+
     sceneRef.current = { scene, camera, renderer, labelRenderer, controls, initialCameraPos: camera.position.clone() }
     const animate = () => {
       requestAnimationFrame(animate)
       controls.update()
+      // Billboard nodes
+      allNodesRef.current.forEach((node) => {
+        if (node.object) {
+          node.object.quaternion.copy(camera.quaternion)
+        }
+      })
+      if (selectionGlowRef.current) {
+        selectionGlowRef.current.quaternion.copy(camera.quaternion)
+      }
       renderer.render(scene, camera)
       labelRenderer.render(scene, camera)
     }
@@ -369,6 +402,19 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
     return cleanupScene
   }, [rootSpeciesId, createScene, fetchData, createTree])
 
+  const handleClosePanel = () => {
+    setSelectedNode(null)
+    if (selectionGlowRef.current) {
+      gsap.to(selectionGlowRef.current.material, {
+        opacity: 0,
+        duration: 0.3,
+        onComplete: () => {
+          if (selectionGlowRef.current) selectionGlowRef.current.visible = false
+        },
+      })
+    }
+  }
+
   // Control Panel Handlers
   const handleResetView = () => {
     if (!sceneRef.current) return
@@ -392,7 +438,6 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
     if (targetNode) {
       handleNodeClick(targetNode)
     } else {
-      // Maybe show a toast notification
       console.log("Species not found in current tree")
     }
   }
@@ -424,7 +469,7 @@ export default function PhylogenyVisualization({ rootSpeciesId }: { rootSpeciesI
           </button>
         </Alert>
       )}
-      {selectedNode && <SpeciesDetailPanel node={selectedNode} onClose={() => setSelectedNode(null)} />}
+      {selectedNode && <SpeciesDetailPanel node={selectedNode} onClose={handleClosePanel} />}
     </div>
   )
 }
