@@ -9,6 +9,8 @@ import { Network, Activity, Zap, LineChart, Globe } from "lucide-react"
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import type { CircularProgressProps } from "@/components/dashboard/circular-progress"
+import { NetworkGraph } from "@/components/natureos/network-graph"
+import type { Node, Edge } from "reactflow"
 
 const CircularProgressComponent = dynamic<CircularProgressProps>(
   () => import("@/components/dashboard/circular-progress").then((mod) => mod.CircularProgress),
@@ -20,9 +22,19 @@ const CircularProgressComponent = dynamic<CircularProgressProps>(
 
 export default function MyceliumNetworkPage() {
   const [isClient, setIsClient] = useState(false)
+  const [nodes, setNodes] = useState<Node[]>([])
+  const [edges, setEdges] = useState<Edge[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     setIsClient(true)
+    fetch("/api/natureos/mycelium-network")
+      .then((res) => res.json())
+      .then((data) => {
+        setNodes(data.nodes)
+        setEdges(data.edges)
+        setIsLoading(false)
+      })
   }, [])
 
   if (!isClient) {
@@ -31,10 +43,7 @@ export default function MyceliumNetworkPage() {
 
   return (
     <DashboardShell>
-      <DashboardHeader
-        heading="Mycelium Network"
-        text="Monitor and manage your fungal intelligence network connections"
-      />
+      <DashboardHeader heading="Mycelium Network" text="Visualize the real-time topology of your fungal network." />
       <div className="grid gap-5">
         <Tabs defaultValue="overview" className="space-y-5">
           <TabsList>
@@ -145,6 +154,24 @@ export default function MyceliumNetworkPage() {
                 </CardContent>
               </Card>
             </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Live Network Graph</CardTitle>
+                <CardDescription>
+                  This graph shows the active nodes and connections in your Mycosoft network. Drag nodes to rearrange
+                  the layout.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="h-[500px] w-full flex items-center justify-center bg-muted rounded-lg">
+                    <p>Loading network data...</p>
+                  </div>
+                ) : (
+                  <NetworkGraph initialNodes={nodes} initialEdges={edges} />
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="connections" className="space-y-5">
@@ -192,9 +219,10 @@ export default function MyceliumNetworkPage() {
                     <Activity className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">Network Health Visualization</p>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="signals" className="space-y-5">
             <Card>
@@ -208,10 +236,11 @@ export default function MyceliumNetworkPage() {
                     <Zap className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">Signal Analysis Dashboard</p>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardShell>
   )

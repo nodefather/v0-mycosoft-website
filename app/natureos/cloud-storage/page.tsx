@@ -2,40 +2,44 @@
 
 import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardShell } from "@/components/dashboard/shell"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileBrowser } from "@/components/natureos/file-browser"
 import { useEffect, useState } from "react"
-import { Cloud } from "lucide-react"
+
+type File = {
+  name: string
+  type: "folder" | "file"
+  size: string
+  modified: string
+}
 
 export default function CloudStoragePage() {
-  const [isClient, setIsClient] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    setIsClient(true)
+    fetch("/api/natureos/files")
+      .then((res) => res.json())
+      .then((data) => {
+        setFiles(data)
+        setIsLoading(false)
+      })
   }, [])
 
-  if (!isClient) {
-    return null
+  if (isLoading) {
+    return (
+      <DashboardShell>
+        <DashboardHeader heading="Cloud Storage" text="Loading your files..." />
+        <div className="h-[400px] w-full flex items-center justify-center bg-muted rounded-lg">
+          <p>Loading file browser...</p>
+        </div>
+      </DashboardShell>
+    )
   }
 
   return (
     <DashboardShell>
-      <DashboardHeader heading="Cloud Storage" text="Manage your data storage" />
-      <div className="grid gap-5">
-        <Card>
-          <CardHeader>
-            <CardTitle>Cloud Storage</CardTitle>
-            <CardDescription>View and manage your stored data</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px] rounded-md border bg-muted/50 flex items-center justify-center">
-              <div className="text-center">
-                <Cloud className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Cloud Storage Interface</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardHeader heading="Cloud Storage" text="Manage your data stored on the Mycosoft Cloud." />
+      <FileBrowser files={files} />
     </DashboardShell>
   )
 }
