@@ -44,16 +44,17 @@ export async function getFungiPaginated({
   const countParams = [...params]
 
   try {
-    const [fungiResult, countResult] = await Promise.all([
-      sql.unsafe(dataQuery, dataParams),
-      sql.unsafe(countQuery, countParams),
+    // Execute queries - each call returns an *array* of rows
+    const [fungiRows, countRows] = await Promise.all([
+      sql.unsafe(dataQuery, ...dataParams),
+      sql.unsafe(countQuery, ...countParams),
     ])
 
-    const total = Number.parseInt(countResult.rows[0].count, 10)
-    const totalPages = Math.ceil(total / limitNum)
+    const total = Number(countRows[0]?.count || 0)
+    const totalPages = Math.max(1, Math.ceil(total / limitNum))
 
     return {
-      fungi: fungiResult.rows,
+      fungi: fungiRows, // <— rows array directly
       total,
       totalPages,
       page: pageNum,
