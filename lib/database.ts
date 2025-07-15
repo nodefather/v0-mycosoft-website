@@ -3,11 +3,8 @@ import type { Fungi } from "@/types/fungi"
 
 const sql = neon(process.env.NEON_DATABASE_URL || "")
 
-// Helper to convert snake_case keys from DB to camelCase for client
 const toCamelCase = (obj: any): any => {
-  if (Array.isArray(obj)) {
-    return obj.map((v) => toCamelCase(v))
-  }
+  if (Array.isArray(obj)) return obj.map((v) => toCamelCase(v))
   if (obj !== null && obj.constructor === Object) {
     return Object.keys(obj).reduce((result, key) => {
       const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
@@ -18,13 +15,10 @@ const toCamelCase = (obj: any): any => {
   return obj
 }
 
-// Helper to convert camelCase sort key from client to snake_case for DB
 const toSnakeCase = (str: string) => str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
 
 export async function getFilterOptions(): Promise<{ edibility: string[]; habitat: string[]; capShape: string[] }> {
   try {
-    // These queries assume 'edibility' and 'habitat' are top-level columns,
-    // and 'capShape' is a key within a JSONB 'characteristics' column.
     const edibilityQuery = sql`SELECT DISTINCT edibility FROM species WHERE edibility IS NOT NULL AND edibility != '' ORDER BY edibility ASC;`
     const habitatQuery = sql`SELECT DISTINCT habitat FROM species WHERE habitat IS NOT NULL AND habitat != '' ORDER BY habitat ASC;`
     const capShapeQuery = sql`SELECT DISTINCT characteristics->>'capShape' AS cap_shape FROM species WHERE characteristics->>'capShape' IS NOT NULL AND characteristics->>'capShape' != '' ORDER BY cap_shape ASC;`
@@ -57,7 +51,7 @@ export async function getFungiPaginated({
   sort?: string
   page?: number
   limit?: number
-  filters?: { edibility?: string; habitat?: string; capShape?: string }
+  filters?: { edibility?: string[]; habitat?: string[]; capShape?: string[] }
 }): Promise<{
   fungi: any[]
   total: number
@@ -70,27 +64,28 @@ export async function getFungiPaginated({
 
   let whereClause = "WHERE 1=1"
   const params: any[] = []
+  let paramIndex = 1
+
   if (query) {
-    whereClause += ` AND (
-      scientific_name ILIKE $${params.length + 1} OR
-      common_name     ILIKE $${params.length + 1} OR
-      family          ILIKE $${params.length + 1}
-    )`
+    whereClause += ` AND (scientific_name ILIKE $${paramIndex} OR common_name ILIKE $${paramIndex} OR family ILIKE $${paramIndex})`
     params.push(`%${query}%`)
+    paramIndex++
   }
 
-  // Add advanced filters
-  if (filters?.edibility) {
-    whereClause += ` AND edibility = $${params.length + 1}`
-    params.push(filters.edibility)
+  if (filters?.edibility && filters.edibility.length > 0) {
+    const placeholders = filters.edibility.map(() => `$${paramIndex++}`).join(", ")
+    whereClause += ` AND edibility IN (${placeholders})`
+    params.push(...filters.edibility)
   }
-  if (filters?.habitat) {
-    whereClause += ` AND habitat = $${params.length + 1}`
-    params.push(filters.habitat)
+  if (filters?.habitat && filters.habitat.length > 0) {
+    const placeholders = filters.habitat.map(() => `$${paramIndex++}`).join(", ")
+    whereClause += ` AND habitat IN (${placeholders})`
+    params.push(...filters.habitat)
   }
-  if (filters?.capShape) {
-    whereClause += ` AND characteristics->>'capShape' = $${params.length + 1}`
-    params.push(filters.capShape)
+  if (filters?.capShape && filters.capShape.length > 0) {
+    const placeholders = filters.capShape.map(() => `$${paramIndex++}`).join(", ")
+    whereClause += ` AND characteristics->>'capShape' IN (${placeholders})`
+    params.push(...filters.capShape)
   }
 
   const snakeCaseSort = sort ? toSnakeCase(sort) : "scientific_name"
@@ -99,18 +94,11 @@ export async function getFungiPaginated({
   const orderByClause = `ORDER BY ${sortColumn} ASC`
 
   const dataQuery = `
-    SELECT id,
-           scientific_name,
-           common_name,
-           family,
-           description,
-           image_url,
-           edibility
-      FROM species
-      ${whereClause}
-      ${orderByClause}
-      LIMIT  $${params.length + 1}
-      OFFSET $${params.length + 2};
+    SELECT id, scientific_name, common_name, family, description, image_url, edibility
+    FROM species
+    ${whereClause}
+    ${orderByClause}
+    LIMIT $${paramIndex++} OFFSET $${paramIndex++};
   `
   const countQuery = `SELECT COUNT(*)::int AS count FROM species ${whereClause};`
 
@@ -139,9 +127,7 @@ export async function getFungiById(id: number): Promise<Fungi | null> {
     return null
   }
   try {
-    const results = await sql`
-      SELECT * FROM species WHERE id = ${id};
-    `
+    const results = await sql`SELECT * FROM species WHERE id = ${id};`
     if (results.length === 0) return null
     return toCamelCase(results[0]) as Fungi
   } catch (error) {

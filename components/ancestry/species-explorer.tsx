@@ -10,6 +10,7 @@ import { Search, AlertTriangle, SlidersHorizontal, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
+import { MultiSelect } from "@/components/ui/multi-select"
 
 interface Species {
   id: number
@@ -124,7 +125,11 @@ export function SpeciesExplorer() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [sort, setSort] = useState("scientificName")
-  const [filters, setFilters] = useState({ edibility: "", habitat: "", capShape: "" })
+  const [filters, setFilters] = useState<{ edibility: string[]; habitat: string[]; capShape: string[] }>({
+    edibility: [],
+    habitat: [],
+    capShape: [],
+  })
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({ edibility: [], habitat: [], capShape: [] })
   const [isLoadingFilters, setIsLoadingFilters] = useState(true)
   const [isPending, startTransition] = useTransition()
@@ -158,14 +163,14 @@ export function SpeciesExplorer() {
       setIsLoading(true)
       setError(null)
       try {
-        const params = new URLSearchParams({
-          search: debouncedQuery,
-          sort: sort,
-          page: page.toString(),
-          limit: "9",
-        })
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value) params.append(key, value)
+        const params = new URLSearchParams()
+        params.append("search", debouncedQuery)
+        params.append("sort", sort)
+        params.append("page", page.toString())
+        params.append("limit", "9")
+
+        Object.entries(filters).forEach(([key, values]) => {
+          values.forEach((value) => params.append(key, value))
         })
 
         const response = await fetch(`/api/species?${params.toString()}`)
@@ -182,17 +187,18 @@ export function SpeciesExplorer() {
     startTransition(fetchData)
   }, [debouncedQuery, page, sort, filters])
 
-  const handleFilterChange = (filterName: keyof typeof filters, value: string) => {
-    setFilters((prev) => ({ ...prev, [filterName]: value }))
-    setPage(1)
-  }
-
   const clearFilters = () => {
-    setFilters({ edibility: "", habitat: "", capShape: "" })
+    setFilters({ edibility: [], habitat: [], capShape: [] })
     setPage(1)
   }
 
-  const areFiltersActive = Object.values(filters).some((v) => v !== "")
+  const areFiltersActive = Object.values(filters).some((v) => v.length > 0)
+
+  const mappedFilterOptions = {
+    edibility: filterOptions.edibility.map((o) => ({ value: o, label: o })),
+    habitat: filterOptions.habitat.map((o) => ({ value: o, label: o })),
+    capShape: filterOptions.capShape.map((o) => ({ value: o, label: o })),
+  }
 
   return (
     <div className="space-y-6">
@@ -241,42 +247,24 @@ export function SpeciesExplorer() {
                   </div>
                 ) : (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <Select value={filters.edibility} onValueChange={(v) => handleFilterChange("edibility", v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Filter by Edibility" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filterOptions.edibility.map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            {opt}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={filters.habitat} onValueChange={(v) => handleFilterChange("habitat", v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Filter by Habitat" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filterOptions.habitat.map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            {opt}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={filters.capShape} onValueChange={(v) => handleFilterChange("capShape", v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Filter by Cap Shape" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filterOptions.capShape.map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            {opt}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <MultiSelect
+                      options={mappedFilterOptions.edibility}
+                      selected={filters.edibility}
+                      onChange={(selected) => setFilters((prev) => ({ ...prev, edibility: selected }))}
+                      placeholder="Filter by Edibility..."
+                    />
+                    <MultiSelect
+                      options={mappedFilterOptions.habitat}
+                      selected={filters.habitat}
+                      onChange={(selected) => setFilters((prev) => ({ ...prev, habitat: selected }))}
+                      placeholder="Filter by Habitat..."
+                    />
+                    <MultiSelect
+                      options={mappedFilterOptions.capShape}
+                      selected={filters.capShape}
+                      onChange={(selected) => setFilters((prev) => ({ ...prev, capShape: selected }))}
+                      placeholder="Filter by Cap Shape..."
+                    />
                   </div>
                 )}
                 {areFiltersActive && (

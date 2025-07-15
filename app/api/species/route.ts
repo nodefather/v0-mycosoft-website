@@ -10,9 +10,9 @@ export async function GET(request: Request) {
     const limit = Number.parseInt(searchParams.get("limit") || "9", 10)
 
     const filters = {
-      edibility: searchParams.get("edibility") || undefined,
-      habitat: searchParams.get("habitat") || undefined,
-      capShape: searchParams.get("capShape") || undefined,
+      edibility: searchParams.getAll("edibility"),
+      habitat: searchParams.getAll("habitat"),
+      capShape: searchParams.getAll("capShape"),
     }
 
     if (isNaN(page) || isNaN(limit)) {
