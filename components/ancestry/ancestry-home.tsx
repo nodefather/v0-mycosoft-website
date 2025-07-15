@@ -80,6 +80,9 @@ export function AncestryHome() {
             <p className="text-sm text-muted-foreground">
               Visualize evolutionary relationships and trace the lineage of fungal species through interactive 3D trees.
             </p>
+            <Button variant="link" className="px-0 pt-2" asChild>
+              <Link href="/natureos/apps/ancestry?tab=phylogenetic-explorer">Launch Explorer &rarr;</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
