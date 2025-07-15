@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@ai-sdk/grok": "latest",
     "@ai-sdk/openai": "latest",
     "@aws-sdk/client-rds-data": "latest",
     "@cloudflare/workers-types": "latest",

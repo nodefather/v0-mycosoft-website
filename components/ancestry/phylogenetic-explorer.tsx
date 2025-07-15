@@ -16,16 +16,16 @@ export default function PhylogeneticExplorer() {
     if (!rootId) return
     setLoading(true)
     setSubmittedId(rootId)
-    // The visualization component will handle its own internal loading state for the data,
-    // this button's loading state is just for user feedback on click.
-    setTimeout(() => setLoading(false), 1000)
+    // The key prop on PhylogenyVisualization will force a re-mount.
+    // We can turn off the button's loading state after a short delay.
+    setTimeout(() => setLoading(false), 1500)
   }
 
   return (
     <div className="space-y-6">
-      <Card className="max-w-4xl mx-auto">
+      <Card className="max-w-4xl mx-auto bg-gray-800/50 border-gray-700">
         <CardHeader>
-          <CardTitle>Generate a New Tree</CardTitle>
+          <CardTitle className="text-white">Generate a New Tree</CardTitle>
           <CardDescription>
             Enter the NCBI Taxonomy ID of the root species to generate its phylogenetic tree. Try `5040` for Boletus or
             `4751` for Fungi.
@@ -38,6 +38,7 @@ export default function PhylogeneticExplorer() {
               value={rootId}
               onChange={(e) => setRootId(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleGenerateTree()}
+              className="bg-gray-900 border-gray-600 text-white"
             />
             <Button onClick={handleGenerateTree} disabled={loading} className="w-full sm:w-auto">
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Share2 className="h-4 w-4 mr-2" />}
@@ -47,8 +48,8 @@ export default function PhylogeneticExplorer() {
         </CardContent>
       </Card>
 
-      <div className="w-full h-[75vh] min-h-[650px] bg-gray-900 rounded-lg border border-gray-700 relative overflow-hidden">
-        <PhylogenyVisualization rootSpeciesId={Number(submittedId)} />
+      <div className="w-full h-[80vh] min-h-[700px] bg-gray-900 rounded-lg border border-gray-700 relative overflow-hidden">
+        <PhylogenyVisualization key={submittedId} rootSpeciesId={Number(submittedId)} />
       </div>
     </div>
   )
