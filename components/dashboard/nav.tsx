@@ -83,14 +83,6 @@ export function DashboardNav() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isActive("/natureos/apps/fungal-database")} tooltip="Fungal Database">
-              <Link href="/natureos/apps/fungal-database">
-                <Database className="h-4 w-4" />
-                <span className="transition-all duration-300">{isOpen ? "Fungal Database" : ""}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive("/natureos/apps/mushroom-sim")} tooltip="Mushroom Simulator">
               <Link href="/natureos/apps/mushroom-sim">
                 <Microscope className="h-4 w-4" />

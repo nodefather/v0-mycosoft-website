@@ -1,43 +1,35 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AncestryExplorer } from "@/components/ancestry/ancestry-explorer"
-import { AncestryHome } from "@/components/ancestry/ancestry-home"
-import { PhylogeneticTreeTool } from "@/components/ancestry/phylogenetic-tree-tool"
-import { DatabaseTools } from "@/components/ancestry/database-tools"
-import { BiologicalTools } from "@/components/ancestry/biological-tools"
 import { SpeciesExplorer } from "@/components/ancestry/species-explorer"
+import { BiologicalTools } from "@/components/ancestry/biological-tools"
+import { PhylogeneticTreeTool } from "@/components/ancestry/phylogenetic-tree-tool"
+import { AncestryHome } from "@/components/ancestry/ancestry-home"
 
-export function AncestryTabs() {
+interface AncestryTabsProps {
+  defaultTab?: string
+}
+
+export function AncestryTabs({ defaultTab = "overview" }: AncestryTabsProps) {
   return (
-    <Tabs defaultValue="home" className="w-full">
-      <TabsList>
-        <TabsTrigger value="home">Home</TabsTrigger>
-        <TabsTrigger value="tools">Tools</TabsTrigger>
-        <TabsTrigger value="explorer">Species Explorer</TabsTrigger>
+    <Tabs defaultValue={defaultTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="explorer">Explorer</TabsTrigger>
+        <TabsTrigger value="tools">Analysis Tools</TabsTrigger>
         <TabsTrigger value="phylogeny">Phylogeny</TabsTrigger>
-        <TabsTrigger value="database">Database</TabsTrigger>
       </TabsList>
-
-      <TabsContent value="home" className="space-y-4">
+      <TabsContent value="overview" className="mt-6">
         <AncestryHome />
       </TabsContent>
-
-      <TabsContent value="explorer" className="space-y-4">
+      <TabsContent value="explorer" className="mt-6">
         <SpeciesExplorer />
       </TabsContent>
-
-      <TabsContent value="phylogeny" className="space-y-4">
-        <PhylogeneticTreeTool />
-      </TabsContent>
-
-      <TabsContent value="database" className="space-y-4">
-        <DatabaseTools />
-      </TabsContent>
-
-      <TabsContent value="tools" className="space-y-4">
-        <AncestryExplorer />
+      <TabsContent value="tools" className="mt-6">
         <BiologicalTools />
+      </TabsContent>
+      <TabsContent value="phylogeny" className="mt-6">
+        <PhylogeneticTreeTool />
       </TabsContent>
     </Tabs>
   )

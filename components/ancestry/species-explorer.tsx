@@ -1,7 +1,4 @@
-// components/ancestry/species-explorer.tsx
 "use client"
-
-import type React from "react"
 import { useState, useEffect, useTransition } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -20,7 +17,7 @@ interface Species {
   family: string
   description: string
   image_url: string
-  characteristics: string[] | string // Allow for both array and string
+  characteristics: string | string[]
 }
 
 interface SpeciesListProps {
@@ -39,12 +36,15 @@ function SpeciesList({ species }: SpeciesListProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {species.map((s) => {
-        // Ensure characteristics is an array
         const characteristicsArray =
-          typeof s.characteristics === "string" ? JSON.parse(s.characteristics) : s.characteristics || []
+          typeof s.characteristics === "string"
+            ? s.characteristics.split(",").map((c) => c.trim())
+            : s.characteristics || []
 
-        const isEdible = characteristicsArray.includes("Edible")
-        const isPoisonous = characteristicsArray.includes("Poisonous") || characteristicsArray.includes("Toxic")
+        const isEdible = characteristicsArray.some((c) => c.toLowerCase() === "edible")
+        const isPoisonous = characteristicsArray.some(
+          (c) => c.toLowerCase() === "poisonous" || c.toLowerCase() === "toxic",
+        )
 
         let badgeVariant: "default" | "destructive" | "secondary" = "secondary"
         let badgeText = "Unknown"
@@ -61,7 +61,7 @@ function SpeciesList({ species }: SpeciesListProps) {
           <Card key={s.id} className="overflow-hidden transition-all hover:shadow-lg flex flex-col">
             <div className="aspect-[16/9] relative">
               <Image
-                src={s.image_url || "/placeholder.svg?height=200&width=300&query=mushroom"}
+                src={s.image_url || `/placeholder.svg?height=200&width=300&query=${s.scientific_name}`}
                 alt={s.scientific_name}
                 fill
                 className="object-cover"
@@ -75,7 +75,7 @@ function SpeciesList({ species }: SpeciesListProps) {
             </div>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-bold">
-                <Link href={`/ancestry/fungal-database/${s.id}`} className="hover:underline">
+                <Link href={`/ancestry/explorer/${s.id}`} className="hover:underline">
                   {s.scientific_name}
                 </Link>
               </CardTitle>
@@ -94,7 +94,7 @@ function SpeciesList({ species }: SpeciesListProps) {
               </div>
               <div className="mt-4">
                 <Link
-                  href={`/ancestry/fungal-database/${s.id}`}
+                  href={`/ancestry/explorer/${s.id}`}
                   className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
                 >
                   View Details →
@@ -111,7 +111,7 @@ function SpeciesList({ species }: SpeciesListProps) {
 function SpeciesExplorerSkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {[...Array(6)].map((_, i) => (
+      {[...Array(9)].map((_, i) => (
         <Card key={i} className="overflow-hidden">
           <div className="aspect-[16/9] relative">
             <Skeleton className="h-full w-full absolute" />
@@ -135,10 +135,19 @@ export function SpeciesExplorer() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [debouncedQuery, setDebouncedQuery] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [sort, setSort] = useState("scientific_name")
   const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+      setPage(1)
+    }, 500)
+    return () => clearTimeout(handler)
+  }, [searchQuery])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -146,7 +155,7 @@ export function SpeciesExplorer() {
       setError(null)
       try {
         const params = new URLSearchParams({
-          search: searchQuery,
+          search: debouncedQuery,
           sort: sort,
           page: page.toString(),
           limit: "9",
@@ -163,7 +172,6 @@ export function SpeciesExplorer() {
         setTotalPages(data.totalPages || 1)
       } catch (e: any) {
         setError(e.message)
-        console.error("Error fetching species:", e)
       } finally {
         setIsLoading(false)
       }
@@ -172,12 +180,7 @@ export function SpeciesExplorer() {
     startTransition(() => {
       fetchData()
     })
-  }, [searchQuery, page, sort])
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setPage(1) // Reset to first page on new search
-  }
+  }, [debouncedQuery, page, sort])
 
   return (
     <div className="space-y-6">
@@ -187,12 +190,9 @@ export function SpeciesExplorer() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Explore our comprehensive database of fungal species with detailed profiles and images.
+            Search our comprehensive database of fungal species. Results will update automatically as you type.
           </p>
-          <form
-            onSubmit={handleSearchSubmit}
-            className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"
-          >
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -203,22 +203,17 @@ export function SpeciesExplorer() {
                 className="pl-10"
               />
             </div>
-            <div className="flex w-full sm:w-auto space-x-2">
-              <Select value={sort} onValueChange={setSort}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="scientific_name">Scientific Name</SelectItem>
-                  <SelectItem value="common_name">Common Name</SelectItem>
-                  <SelectItem value="family">Family</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="submit" className="w-full sm:w-auto">
-                Search
-              </Button>
-            </div>
-          </form>
+            <Select value={sort} onValueChange={setSort}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="scientific_name">Scientific Name</SelectItem>
+                <SelectItem value="common_name">Common Name</SelectItem>
+                <SelectItem value="family">Family</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
@@ -233,25 +228,27 @@ export function SpeciesExplorer() {
 
       {isLoading || isPending ? <SpeciesExplorerSkeleton /> : <SpeciesList species={species} />}
 
-      <div className="flex justify-between items-center">
-        <Button
-          variant="outline"
-          disabled={page === 1 || isLoading || isPending}
-          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-        >
-          Previous
-        </Button>
-        <p className="text-sm text-muted-foreground">
-          Page {page} of {totalPages}
-        </p>
-        <Button
-          variant="outline"
-          disabled={page === totalPages || isLoading || isPending}
-          onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-        >
-          Next
-        </Button>
-      </div>
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center">
+          <Button
+            variant="outline"
+            disabled={page === 1 || isLoading || isPending}
+            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          >
+            Previous
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </p>
+          <Button
+            variant="outline"
+            disabled={page === totalPages || isLoading || isPending}
+            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

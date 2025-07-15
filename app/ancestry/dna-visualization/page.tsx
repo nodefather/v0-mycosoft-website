@@ -1,13 +1,21 @@
-import { BarChart } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DnaVisualizerTool } from "@/components/ancestry/dna-visualizer-tool"
+
+export const metadata = {
+  title: "DNA Visualization | Fungal Ancestry",
+  description: "Visualize genetic data and structures in 3D.",
+}
 
 export default function DnaVisualizationPage() {
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 h-full">
-      <BarChart className="h-16 w-16 text-yellow-500 mb-4" />
-      <h1 className="text-3xl font-bold">DNA Visualization Tool</h1>
-      <p className="text-muted-foreground mt-2">
-        This tool is under construction. Soon you'll be able to generate insightful charts from your genetic data.
-      </p>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>3D DNA Visualization</CardTitle>
+        <CardDescription>Generate and interact with a 3D visualization of a DNA helix structure.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <DnaVisualizerTool />
+      </CardContent>
+    </Card>
   )
 }

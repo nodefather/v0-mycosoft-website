@@ -1,27 +1,23 @@
-// app/natureos/apps/ancestry/page.tsx
 "use client"
 
 import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardShell } from "@/components/dashboard/shell"
-import { useEffect, useState } from "react"
 import { AncestryTabs } from "@/components/ancestry/ancestry-tabs"
+import { useSearchParams } from "next/navigation"
 
 export default function AncestryPageWrapper() {
-  const [isClient, setIsClient] = useState(false)
-
-  useEffect(() => {
-    setIsClient(true)
-    console.log("Ancestry page rendered")
-  }, [])
-
-  if (!isClient) {
-    return null
-  }
+  const searchParams = useSearchParams()
+  const defaultTab = searchParams.get("tab") || "overview"
 
   return (
     <DashboardShell>
-      <DashboardHeader heading="Ancestry Database" text="Explore fungal genealogy and relationships" />
-      <AncestryTabs />
+      <DashboardHeader
+        heading="Ancestry Database"
+        text="Explore fungal genealogy, relationships, and biological data."
+      />
+      <div className="mt-4">
+        <AncestryTabs defaultTab={defaultTab} />
+      </div>
     </DashboardShell>
   )
 }

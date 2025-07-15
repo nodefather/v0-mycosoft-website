@@ -1,13 +1,23 @@
-import { Bot } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { InteractionPredictionTool } from "@/components/ancestry/interaction-prediction-tool"
+
+export const metadata = {
+  title: "Interaction Prediction | Fungal Ancestry",
+  description: "Predict molecular interactions between different fungal species.",
+}
 
 export default function InteractionPredictionPage() {
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 h-full">
-      <Bot className="h-16 w-16 text-red-500 mb-4" />
-      <h1 className="text-3xl font-bold">Interaction Prediction Tool</h1>
-      <p className="text-muted-foreground mt-2">
-        This tool is under construction. Soon you'll be able to predict molecular interactions.
-      </p>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Interaction Prediction Tool</CardTitle>
+        <CardDescription>
+          Predict potential molecular or ecological interactions between two different species using their IDs.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <InteractionPredictionTool />
+      </CardContent>
+    </Card>
   )
 }

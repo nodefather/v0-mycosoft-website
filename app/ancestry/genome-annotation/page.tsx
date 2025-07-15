@@ -1,13 +1,23 @@
-import { FileText } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { GenomeAnnotationTool } from "@/components/ancestry/genome-annotation-tool"
+
+export const metadata = {
+  title: "Genome Annotation | Fungal Ancestry",
+  description: "Automatically identify and label genes and other functional elements in a genome.",
+}
 
 export default function GenomeAnnotationPage() {
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 h-full">
-      <FileText className="h-16 w-16 text-orange-500 mb-4" />
-      <h1 className="text-3xl font-bold">Genome Annotation Tool</h1>
-      <p className="text-muted-foreground mt-2">
-        This tool is under construction. Soon you'll be able to identify genes and other biological features.
-      </p>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Genome Annotation Tool</CardTitle>
+        <CardDescription>
+          Submit a genome ID to automatically identify genes and other biological features.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <GenomeAnnotationTool />
+      </CardContent>
+    </Card>
   )
 }

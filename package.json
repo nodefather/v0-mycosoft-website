@@ -48,7 +48,6 @@
     "pg": "latest",
     "postgres": "latest",
     "react": "^19",
-    "react-d3-tree": "latest",
     "react-dom": "^19",
     "react-hook-form": "latest",
     "react-leaflet": "latest",
