@@ -1,16 +1,18 @@
-import type { Metadata } from "next"
 import { Chat } from "@/components/chat/chat"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
-export const metadata: Metadata = {
-  title: "Myca AI - Mycosoft",
-  description: "Your AI-powered mycology research assistant",
-}
-
-export default function MycaAIPage() {
+export default function MycaAiPage() {
   return (
-    <div className="container flex h-[calc(100vh-4rem)] flex-col py-6">
-      <h1 className="text-3xl font-bold mb-8">Myca AI Assistant</h1>
-      <Chat />
+    <div className="container mx-auto px-4 py-8 h-[calc(100vh-10rem)]">
+      <Card className="h-full flex flex-col">
+        <CardHeader>
+          <CardTitle className="text-2xl">Myca AI</CardTitle>
+          <CardDescription>Your intelligent assistant for mycology research and data analysis.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-grow overflow-hidden">
+          <Chat />
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -52,6 +52,7 @@
     "react-dom": "^19",
     "react-hook-form": "latest",
     "react-leaflet": "latest",
+    "recharts": "latest",
     "sharp": "latest",
     "sql.js": "latest",
     "sqlite3": "latest",
