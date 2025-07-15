@@ -1,6 +1,22 @@
 import { neon } from "@neondatabase/serverless"
+import type { Fungi } from "@/types/fungi"
 
 const sql = neon(process.env.NEON_DATABASE_URL || "")
+
+// Helper to convert snake_case keys to camelCase
+const toCamelCase = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map((v) => toCamelCase(v))
+  }
+  if (obj !== null && obj.constructor === Object) {
+    return Object.keys(obj).reduce((result, key) => {
+      const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
+      result[camelKey] = toCamelCase(obj[key])
+      return result
+    }, {} as any)
+  }
+  return obj
+}
 
 export async function getFungiPaginated({
   query,
@@ -45,7 +61,8 @@ export async function getFungiPaginated({
            family,
            description,
            image_url,
-           characteristics
+           characteristics,
+           edibility
       FROM species
       ${whereClause}
       ${orderByClause}
@@ -65,14 +82,14 @@ export async function getFungiPaginated({
     const total = (countRows[0] as any)?.count ?? 0
     const totalPages = Math.max(1, Math.ceil(total / limitNum))
 
-    return { fungi: fungiRows as any[], total, totalPages, page: pageNum }
+    return { fungi: toCamelCase(fungiRows), total, totalPages, page: pageNum }
   } catch (error) {
     console.error("🛑 Error fetching paginated fungi:", error)
     return { fungi: [], total: 0, totalPages: 1, page: 1 }
   }
 }
 
-export async function getFungiById(id: number): Promise<any | null> {
+export async function getFungiById(id: number): Promise<Fungi | null> {
   if (isNaN(id)) {
     console.error("🛑 Invalid ID provided to getFungiById:", id)
     return null
@@ -83,36 +100,10 @@ export async function getFungiById(id: number): Promise<any | null> {
     `
     if (results.length === 0) return null
 
-    const fungi = results[0]
+    const fungiData = results[0]
 
-    // Manually construct the nested structure FungiProfile expects
-    // This is a transitional step to bridge the flat DB schema and the component's expectation
-    return {
-      ...fungi,
-      id: fungi.id,
-      scientificName: fungi.scientific_name,
-      commonName: fungi.common_name,
-      description: fungi.description,
-      edibility: fungi.edibility,
-      habitat: fungi.habitat,
-      season: fungi.season,
-      ecology: fungi.ecology,
-      notes: fungi.notes,
-      // Assume characteristics and images are JSONB columns
-      characteristics:
-        typeof fungi.characteristics === "string" ? JSON.parse(fungi.characteristics) : fungi.characteristics,
-      images: typeof fungi.images === "string" ? JSON.parse(fungi.images) : fungi.images,
-      // Construct taxonomy object from flat columns
-      taxonomy: {
-        kingdom: fungi.kingdom,
-        phylum: fungi.phylum,
-        class: fungi.class,
-        order: fungi.order,
-        family: fungi.family,
-        genus: fungi.genus,
-        species: fungi.scientific_name,
-      },
-    }
+    // The toCamelCase function will handle the conversion
+    return toCamelCase(fungiData) as Fungi
   } catch (error) {
     console.error(`🛑 Error fetching fungi with ID ${id}:`, error)
     return null

@@ -12,12 +12,12 @@ import { Badge } from "@/components/ui/badge"
 
 interface Species {
   id: number
-  scientific_name: string
-  common_name: string
+  scientificName: string
+  commonName: string
   family: string
   description: string
-  image_url: string
-  characteristics: string | string[]
+  imageUrl: string
+  edibility: string
 }
 
 interface SpeciesListProps {
@@ -36,56 +36,52 @@ function SpeciesList({ species }: SpeciesListProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {species.map((s) => {
-        const characteristicsArray =
-          typeof s.characteristics === "string"
-            ? s.characteristics.split(",").map((c) => c.trim())
-            : s.characteristics || []
-
-        const isEdible = characteristicsArray.some((c) => c.toLowerCase() === "edible")
-        const isPoisonous = characteristicsArray.some(
-          (c) => c.toLowerCase() === "poisonous" || c.toLowerCase() === "toxic",
-        )
-
+        const edibility = s.edibility?.toLowerCase()
         let badgeVariant: "default" | "destructive" | "secondary" = "secondary"
-        let badgeText = "Unknown"
+        const badgeText = s.edibility || "Unknown"
 
-        if (isEdible) {
+        if (edibility?.includes("edible")) {
           badgeVariant = "default"
-          badgeText = "Edible"
-        } else if (isPoisonous) {
+        } else if (edibility?.includes("poisonous") || edibility?.includes("toxic")) {
           badgeVariant = "destructive"
-          badgeText = "Poisonous"
         }
 
         return (
-          <Card key={s.id} className="overflow-hidden transition-all hover:shadow-lg flex flex-col">
+          <Card key={s.id} className="overflow-hidden transition-all hover:shadow-lg flex flex-col group">
             <div className="aspect-[16/9] relative">
               <Image
-                src={s.image_url || `/placeholder.svg?height=200&width=300&query=${s.scientific_name}`}
-                alt={s.scientific_name}
+                src={s.imageUrl || `/placeholder.svg?height=200&width=300&query=${s.scientificName}`}
+                alt={s.scientificName}
                 fill
-                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
               <Badge
                 variant={badgeVariant}
-                className={`absolute top-2 right-2 ${isEdible ? "bg-green-500 hover:bg-green-600" : ""}`}
+                className={`absolute top-2 right-2 ${
+                  badgeVariant === "default" ? "bg-green-500 hover:bg-green-600 text-white" : ""
+                }`}
               >
                 {badgeText}
               </Badge>
             </div>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-bold">
+              <CardTitle className="text-lg font-bold italic group-hover:text-emerald-600">
                 <Link href={`/ancestry/fungal-database/${s.id}`} className="hover:underline">
-                  {s.scientific_name}
+                  {s.scientificName}
                 </Link>
               </CardTitle>
-              <p className="text-sm text-muted-foreground">{s.common_name}</p>
+              <p className="text-sm text-muted-foreground">{s.commonName}</p>
             </CardHeader>
             <CardContent className="pb-4 flex-grow flex flex-col justify-between">
               <div>
                 <div className="mb-2">
                   <p className="font-medium text-sm">Family:</p>
                   <p className="text-sm text-muted-foreground">{s.family}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Description:</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{s.description}</p>
                 </div>
               </div>
               <div className="mt-4">
@@ -109,16 +105,14 @@ function SpeciesExplorerSkeleton() {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {[...Array(9)].map((_, i) => (
         <Card key={i} className="overflow-hidden">
-          <div className="aspect-[16/9] relative">
-            <Skeleton className="h-full w-full absolute" />
-          </div>
-          <CardHeader className="pb-2">
+          <Skeleton className="h-48 w-full" />
+          <CardHeader>
             <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-1/2 mt-2" />
           </CardHeader>
           <CardContent>
             <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-full" />
           </CardContent>
         </Card>
       ))}
@@ -134,7 +128,7 @@ export function SpeciesExplorer() {
   const [debouncedQuery, setDebouncedQuery] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [sort, setSort] = useState("scientific_name")
+  const [sort, setSort] = useState("scientificName")
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -158,13 +152,13 @@ export function SpeciesExplorer() {
         })
 
         const response = await fetch(`/api/species?${params.toString()}`)
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: "An unknown error occurred." }))
+          throw new Error(errorData.message || "Failed to fetch data.")
+        }
         const data = await response.json()
 
-        if (!data.ok) {
-          throw new Error(data.message || "An error occurred while fetching data.")
-        }
-
-        setSpecies(Array.isArray(data.fungi) ? data.fungi : [])
+        setSpecies(Array.isArray(data.species) ? data.species : [])
         setTotalPages(data.totalPages || 1)
       } catch (e: any) {
         setError(e.message)
@@ -182,12 +176,9 @@ export function SpeciesExplorer() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Fungal Species Explorer</CardTitle>
+          <CardTitle>Search Controls</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Search our comprehensive database of fungal species. Results will update automatically as you type.
-          </p>
           <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -204,8 +195,8 @@ export function SpeciesExplorer() {
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="scientific_name">Scientific Name</SelectItem>
-                <SelectItem value="common_name">Common Name</SelectItem>
+                <SelectItem value="scientificName">Scientific Name</SelectItem>
+                <SelectItem value="commonName">Common Name</SelectItem>
                 <SelectItem value="family">Family</SelectItem>
               </SelectContent>
             </Select>
@@ -222,19 +213,11 @@ export function SpeciesExplorer() {
         </Card>
       )}
 
-      {isLoading || isPending ? (
-        <SpeciesExplorerSkeleton />
-      ) : (
-        <SpeciesList species={Array.isArray(species) ? species : []} />
-      )}
+      {isLoading || isPending ? <SpeciesExplorerSkeleton /> : <SpeciesList species={species} />}
 
-      {totalPages > 1 && (
+      {totalPages > 1 && !isLoading && !isPending && (
         <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            disabled={page === 1 || isLoading || isPending}
-            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          >
+          <Button variant="outline" disabled={page === 1} onClick={() => setPage((prev) => Math.max(prev - 1, 1))}>
             Previous
           </Button>
           <p className="text-sm text-muted-foreground">
@@ -242,7 +225,7 @@ export function SpeciesExplorer() {
           </p>
           <Button
             variant="outline"
-            disabled={page === totalPages || isLoading || isPending}
+            disabled={page === totalPages}
             onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
           >
             Next
