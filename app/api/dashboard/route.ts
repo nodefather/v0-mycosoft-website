@@ -1,30 +1,30 @@
 // Next.js API route for Mycosoft website dashboard integration
 // This should be placed in the Mycosoft website repository
 
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server"
 
 // NatureOS API configuration
-const NATUREOS_API_BASE = process.env.NATUREOS_API_URL || 'https://natureos-api.mycosoft.com';
-const API_KEY = process.env.NATUREOS_API_KEY;
+const NATUREOS_API_BASE = process.env.NATUREOS_API_URL || "https://natureos-api.mycosoft.com"
+const API_KEY = process.env.NATUREOS_API_KEY
 
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const dataType = searchParams.get('type') || 'all';
+    const { searchParams } = new URL(request.url)
+    const dataType = searchParams.get("type") || "all"
 
     // Fetch data from NatureOS Core API
     const response = await fetch(`${NATUREOS_API_BASE}/api/mycosoft/website/dashboard`, {
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
       },
-    });
+    })
 
     if (!response.ok) {
-      throw new Error(`NatureOS API error: ${response.status}`);
+      throw new Error(`NatureOS API error: ${response.status}`)
     }
 
-    const dashboardData = await response.json();
+    const dashboardData = await response.json()
 
     // Transform data for website components
     const transformedData = {
@@ -35,11 +35,11 @@ export async function GET(request) {
         onlineUsers: dashboardData.onlineUsers,
       },
       liveData: {
-        readings: dashboardData.liveReadings.map(reading => ({
+        readings: dashboardData.liveReadings.map((reading: any) => ({
           device: reading.deviceId,
           value: reading.value,
           timestamp: reading.timestamp,
-          status: 'active',
+          status: "active",
         })),
         lastUpdate: new Date().toISOString(),
       },
@@ -48,82 +48,82 @@ export async function GET(request) {
         recentDiscoveries: dashboardData.recentDiscoveries,
       },
       networkHealth: {
-        status: 'optimal',
+        status: "optimal",
         connections: dashboardData.activeDevices,
-        throughput: '2.4 MB/s',
+        throughput: "2.4 MB/s",
       },
-    };
+    }
 
-    return NextResponse.json(transformedData);
+    return NextResponse.json(transformedData)
   } catch (error) {
-    console.error('Dashboard API error:', error);
-    
+    console.error("Dashboard API error:", error)
+
     // Return fallback data if NatureOS is unavailable
-    return NextResponse.json({
-      stats: {
-        totalEvents: 150000,
-        activeDevices: 42,
-        speciesDetected: 156,
-        onlineUsers: 23,
+    return NextResponse.json(
+      {
+        stats: {
+          totalEvents: 150000,
+          activeDevices: 42,
+          speciesDetected: 156,
+          onlineUsers: 23,
+        },
+        liveData: {
+          readings: [
+            { device: "MUSHROOM-001", value: 23.5, timestamp: new Date().toISOString(), status: "active" },
+            { device: "SPORE-DET-002", value: 0.75, timestamp: new Date().toISOString(), status: "active" },
+            { device: "ENV-STATION-A", value: 78.2, timestamp: new Date().toISOString(), status: "active" },
+          ],
+          lastUpdate: new Date().toISOString(),
+        },
+        insights: {
+          trendingCompounds: ["Psilocybin", "Cordycepin", "Beta-glucan"],
+          recentDiscoveries: ["New mycorrhizal network topology discovered", "Novel antifungal compound isolated"],
+        },
+        networkHealth: {
+          status: "optimal",
+          connections: 42,
+          throughput: "2.4 MB/s",
+        },
+        error: error instanceof Error ? error.message : String(error),
       },
-      liveData: {
-        readings: [
-          { device: 'MUSHROOM-001', value: 23.5, timestamp: new Date().toISOString(), status: 'active' },
-          { device: 'SPORE-DET-002', value: 0.75, timestamp: new Date().toISOString(), status: 'active' },
-          { device: 'ENV-STATION-A', value: 78.2, timestamp: new Date().toISOString(), status: 'active' },
-        ],
-        lastUpdate: new Date().toISOString(),
-      },
-      insights: {
-        trendingCompounds: ['Psilocybin', 'Cordycepin', 'Beta-glucan'],
-        recentDiscoveries: [
-          'New mycorrhizal network topology discovered',
-          'Novel antifungal compound isolated',
-        ],
-      },
-      networkHealth: {
-        status: 'optimal',
-        connections: 42,
-        throughput: '2.4 MB/s',
-      },
-      error: error.message,
-    }, { status: 200 }); // Return 200 with fallback data
+      { status: 200 },
+    ) // Return 200 with fallback data
   }
 }
 
-export async function POST(request) {
+export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { action, data } = body;
+    const body = await request.json()
+    const { action, data } = body
 
     switch (action) {
-      case 'sync':
+      case "sync":
         // Trigger data sync
         const syncResponse = await fetch(`${NATUREOS_API_BASE}/api/mycosoft/sync`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${API_KEY}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${API_KEY}`,
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            syncTargets: ['website'],
-            dataTypes: ['events', 'devices', 'species'],
+            syncTargets: ["website"],
+            dataTypes: ["events", "devices", "species"],
           }),
-        });
+        })
 
-        const syncResult = await syncResponse.json();
-        return NextResponse.json(syncResult);
+        const syncResult = await syncResponse.json()
+        return NextResponse.json(syncResult)
 
-      case 'update':
+      case "update":
         // Handle dashboard updates from NatureOS
         // This would update the website's local cache
-        return NextResponse.json({ success: true, message: 'Dashboard updated' });
+        return NextResponse.json({ success: true, message: "Dashboard updated" })
 
       default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 })
     }
   } catch (error) {
-    console.error('Dashboard POST error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Dashboard POST error:", error)
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 })
   }
-} 
+}
