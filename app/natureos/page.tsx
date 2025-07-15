@@ -1,23 +1,14 @@
 import { NatureOSDashboard } from "@/components/dashboard/natureos-dashboard"
 import type { OverviewStats } from "@/types/natureos"
 
+// This function now fetches from the internal mock API route.
 async function getOverviewStats(): Promise<OverviewStats> {
-  const apiUrl = process.env.NATUREOS_API_URL
-  if (!apiUrl) {
-    console.error("NATUREOS_API_URL environment variable is not set.")
-    // Return fallback data if the API URL is not configured
-    return {
-      activeNodes: { value: 0, subtext: "+0 from last hour", progress: 0 },
-      apiRequests: { value: "0", subtext: "0 requests/min", progress: 0 },
-      aiOperations: { value: "0", subtext: "0% success rate", progress: 0 },
-      storageUsed: { value: "0TB", subtext: "of 0TB total", progress: 0 },
-    }
-  }
-
   try {
-    // Fetch data from your live backend
-    const res = await fetch(`${apiUrl}/overview`, {
-      next: { revalidate: 60 }, // Revalidate data every 60 seconds
+    // Using an absolute path for the fetch request on the server.
+    // This requires knowing the full URL, which we can construct.
+    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
+    const res = await fetch(`${baseUrl}/api/natureos/stats`, {
+      next: { revalidate: 10 }, // Revalidate every 10 seconds
     })
 
     if (!res.ok) {
@@ -31,10 +22,10 @@ async function getOverviewStats(): Promise<OverviewStats> {
     console.error("Error fetching NatureOS overview stats:", error)
     // Return fallback data on fetch error
     return {
-      activeNodes: { value: 0, subtext: "+0 from last hour", progress: 0 },
-      apiRequests: { value: "0", subtext: "0 requests/min", progress: 0 },
-      aiOperations: { value: "0", subtext: "0% success rate", progress: 0 },
-      storageUsed: { value: "0TB", subtext: "of 0TB total", progress: 0 },
+      activeNodes: { value: 0, subtext: "Error loading", progress: 0 },
+      apiRequests: { value: "0", subtext: "Error loading", progress: 0 },
+      aiOperations: { value: "0", subtext: "Error loading", progress: 0 },
+      storageUsed: { value: "0TB", subtext: "Error loading", progress: 0 },
     }
   }
 }

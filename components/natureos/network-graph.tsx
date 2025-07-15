@@ -13,15 +13,9 @@ export function NetworkGraph() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Use the public environment variable on the client-side
-      const apiUrl = process.env.NEXT_PUBLIC_NATUREOS_API_URL
-      if (!apiUrl) {
-        setError("NatureOS API URL is not configured. Please set NEXT_PUBLIC_NATUREOS_API_URL.")
-        setIsLoading(false)
-        return
-      }
       try {
-        const response = await fetch(`${apiUrl}/mycelium-network`)
+        // Fetch from the internal mock API route
+        const response = await fetch(`/api/natureos/mycelium-network`)
         if (!response.ok) {
           throw new Error(`Network response was not ok: ${response.statusText}`)
         }

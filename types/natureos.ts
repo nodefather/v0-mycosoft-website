@@ -1,21 +1,20 @@
-export interface StatCardData {
+export interface OverviewStat {
   value: number | string
   subtext: string
   progress: number
-  change?: number
 }
 
 export interface OverviewStats {
-  activeNodes: StatCardData
-  apiRequests: StatCardData
-  aiOperations: StatCardData
-  storageUsed: StatCardData
+  activeNodes: OverviewStat
+  apiRequests: OverviewStat
+  aiOperations: OverviewStat
+  storageUsed: OverviewStat
 }
 
 export interface NetworkNode {
   id: string
   group: number
-  size: number
+  size?: number
 }
 
 export interface NetworkLink {
@@ -29,22 +28,11 @@ export interface MyceliumNetworkData {
   links: NetworkLink[]
 }
 
-export interface TrendDataPoint {
-  date: string
-  value: number
-}
-
-export interface AnalyticsTrends {
-  networkGrowth: TrendDataPoint[]
-  signalStrength: TrendDataPoint[]
-  dataProcessing: TrendDataPoint[]
-}
-
 export interface FileNode {
   id: string
   name: string
   type: "folder" | "file"
-  size?: string
   modified: string
+  size?: string
   children?: FileNode[]
 }
