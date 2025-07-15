@@ -1,9 +1,5 @@
 "use client"
-
-import { CardFooter } from "@/components/ui/card"
-
 import { CardDescription } from "@/components/ui/card"
-
 import { useState } from "react"
 import {
   Activity,
@@ -14,8 +10,6 @@ import {
   Cloud,
   Code,
   Database,
-  FileText,
-  Gauge,
   Globe,
   LineChart,
   Microscope,
@@ -33,21 +27,35 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import dynamic from "next/dynamic"
 import type { CircularProgressProps } from "@/components/dashboard/circular-progress"
+import type { OverviewStats } from "@/types/natureos"
+import Link from "next/link"
 
 const AzureMap = dynamic(() => import("@/components/maps/azure-map").then((mod) => mod.AzureMap), {
   ssr: false,
-  loading: () => <p>Loading map...</p>,
+  loading: () => (
+    <div className="h-full w-full bg-muted/50 flex items-center justify-center">
+      <p>Loading map...</p>
+    </div>
+  ),
 })
 
 const CircularProgressComponent = dynamic<CircularProgressProps>(
   () => import("@/components/dashboard/circular-progress").then((mod) => mod.CircularProgress),
   {
     ssr: false,
-    loading: () => <p>Loading circular progress...</p>,
+    loading: () => (
+      <div className="h-full w-full bg-muted/50 flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    ),
   },
 )
 
-export function NatureOSDashboard() {
+interface NatureOSDashboardProps {
+  initialStats: OverviewStats
+}
+
+export function NatureOSDashboard({ initialStats }: NatureOSDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview")
 
   return (
@@ -61,14 +69,18 @@ export function NatureOSDashboard() {
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </Button>
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              New Project
-            </Button>
+            <Link href="/natureos/settings">
+              <Button variant="outline" size="sm">
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Button>
+            </Link>
+            <Link href="/natureos/new-project">
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                New Project
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -80,10 +92,10 @@ export function NatureOSDashboard() {
                 <Network className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">2,345</div>
-                <p className="text-xs text-muted-foreground">+180 from last hour</p>
+                <div className="text-2xl font-bold">{Number(initialStats.activeNodes.value).toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">{initialStats.activeNodes.subtext}</p>
                 <div className="mt-4">
-                  <Progress value={65} />
+                  <Progress value={initialStats.activeNodes.progress} />
                 </div>
               </CardContent>
             </Card>
@@ -93,10 +105,10 @@ export function NatureOSDashboard() {
                 <Code className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">1.2M</div>
-                <p className="text-xs text-muted-foreground">23k requests/min</p>
+                <div className="text-2xl font-bold">{initialStats.apiRequests.value}</div>
+                <p className="text-xs text-muted-foreground">{initialStats.apiRequests.subtext}</p>
                 <div className="mt-4">
-                  <Progress value={78} />
+                  <Progress value={initialStats.apiRequests.progress} />
                 </div>
               </CardContent>
             </Card>
@@ -106,10 +118,10 @@ export function NatureOSDashboard() {
                 <Bot className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">845k</div>
-                <p className="text-xs text-muted-foreground">98.2% success rate</p>
+                <div className="text-2xl font-bold">{initialStats.aiOperations.value}</div>
+                <p className="text-xs text-muted-foreground">{initialStats.aiOperations.subtext}</p>
                 <div className="mt-4">
-                  <Progress value={98} />
+                  <Progress value={initialStats.aiOperations.progress} />
                 </div>
               </CardContent>
             </Card>
@@ -119,10 +131,10 @@ export function NatureOSDashboard() {
                 <Database className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">1.8TB</div>
-                <p className="text-xs text-muted-foreground">of 2.5TB total</p>
+                <div className="text-2xl font-bold">{initialStats.storageUsed.value}</div>
+                <p className="text-xs text-muted-foreground">{initialStats.storageUsed.subtext}</p>
                 <div className="mt-4">
-                  <Progress value={72} />
+                  <Progress value={initialStats.storageUsed.progress} />
                 </div>
               </CardContent>
             </Card>
@@ -139,48 +151,18 @@ export function NatureOSDashboard() {
                   <AzureMap
                     className="rounded-none border-0"
                     deviceLocations={[
-                      {
-                        id: "device-1",
-                        name: "Mushroom 1 - SF",
-                        location: [-122.4194, 37.7749], // San Francisco
-                        status: "active",
-                      },
-                      {
-                        id: "device-2",
-                        name: "SporeBase - NYC",
-                        location: [-74.006, 40.7128], // New York
-                        status: "active",
-                      },
+                      { id: "device-1", name: "Mushroom 1 - SF", location: [-122.4194, 37.7749], status: "active" },
+                      { id: "device-2", name: "SporeBase - NYC", location: [-74.006, 40.7128], status: "active" },
                       {
                         id: "device-3",
                         name: "TruffleBot - Austin",
-                        location: [-97.7431, 30.2672], // Austin
+                        location: [-97.7431, 30.2672],
                         status: "inactive",
                       },
-                      {
-                        id: "device-4",
-                        name: "Mushroom 1 - London",
-                        location: [-0.1278, 51.5074], // London
-                        status: "active",
-                      },
-                      {
-                        id: "device-5",
-                        name: "SporeBase - Tokyo",
-                        location: [139.6503, 35.6762], // Tokyo
-                        status: "active",
-                      },
-                      {
-                        id: "device-6",
-                        name: "MycoTenna - Berlin",
-                        location: [13.405, 52.52], // Berlin
-                        status: "active",
-                      },
-                      {
-                        id: "device-7",
-                        name: "ALARM - Sydney",
-                        location: [151.2093, -33.8688], // Sydney
-                        status: "active",
-                      },
+                      { id: "device-4", name: "Mushroom 1 - London", location: [-0.1278, 51.5074], status: "active" },
+                      { id: "device-5", name: "SporeBase - Tokyo", location: [139.6503, 35.6762], status: "active" },
+                      { id: "device-6", name: "MycoTenna - Berlin", location: [13.405, 52.52], status: "active" },
+                      { id: "device-7", name: "ALARM - Sydney", location: [151.2093, -33.8688], status: "active" },
                     ]}
                   />
                 </div>
@@ -211,13 +193,23 @@ export function NatureOSDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { name: "Mushroom 1", count: 1245, status: "Operational", icon: MouseIcon },
-                    { name: "SporeBase", count: 879, status: "Operational", icon: Database },
-                    { name: "TruffleBot", count: 432, status: "Maintenance", icon: Bug },
-                    { name: "ALARM", count: 2156, status: "Operational", icon: AlertCircle },
-                    { name: "Petreus", count: 78, status: "Testing", icon: PipetteIcon },
+                    {
+                      name: "Mushroom 1",
+                      count: 1245,
+                      status: "Operational",
+                      icon: MouseIcon,
+                      href: "/natureos/devices",
+                    },
+                    { name: "SporeBase", count: 879, status: "Operational", icon: Database, href: "/natureos/devices" },
+                    { name: "TruffleBot", count: 432, status: "Maintenance", icon: Bug, href: "/natureos/devices" },
+                    { name: "ALARM", count: 2156, status: "Operational", icon: AlertCircle, href: "/natureos/devices" },
+                    { name: "Petreus", count: 78, status: "Testing", icon: PipetteIcon, href: "/natureos/devices" },
                   ].map((device) => (
-                    <div key={device.name} className="flex items-center">
+                    <Link
+                      href={device.href}
+                      key={device.name}
+                      className="flex items-center hover:bg-muted/50 rounded-md p-2 -m-2 transition-colors"
+                    >
                       <div className="mr-4 rounded-md bg-primary/10 p-2">
                         <device.icon className="h-4 w-4 text-primary" />
                       </div>
@@ -226,7 +218,7 @@ export function NatureOSDashboard() {
                         <p className="text-sm text-muted-foreground">{device.count} active</p>
                       </div>
                       <Badge variant={device.status === "Operational" ? "default" : "secondary"}>{device.status}</Badge>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </CardContent>
@@ -247,9 +239,7 @@ export function NatureOSDashboard() {
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-4">
                       <div
-                        className={`p-2 rounded-full ${
-                          item.status === "success" ? "bg-green-500/20" : "bg-yellow-500/20"
-                        }`}
+                        className={`p-2 rounded-full ${item.status === "success" ? "bg-green-500/20" : "bg-yellow-500/20"}`}
                       >
                         <item.icon
                           className={`h-4 w-4 ${item.status === "success" ? "text-green-500" : "text-yellow-500"}`}
@@ -271,26 +261,36 @@ export function NatureOSDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-2">
-                  <Button className="w-full justify-start" variant="outline">
-                    <Bot className="mr-2 h-4 w-4" />
-                    Launch AI Studio
-                  </Button>
-                  <Button className="w-full justify-start" variant="outline">
-                    <Globe className="mr-2 h-4 w-4" />
-                    View Global Network
-                  </Button>
-                  <Button className="w-full justify-start" variant="outline">
-                    <Code className="mr-2 h-4 w-4" />
-                    API Documentation
-                  </Button>
-                  <Button className="w-full justify-start" variant="outline">
-                    <Cloud className="mr-2 h-4 w-4" />
-                    Deploy New Node
-                  </Button>
-                  <Button className="w-full justify-start" variant="outline">
-                    <PipetteIcon className="mr-2 h-4 w-4" />
-                    Open Petri Simulator
-                  </Button>
+                  <Link href="/myca-ai">
+                    <Button className="w-full justify-start bg-transparent" variant="outline">
+                      <Bot className="mr-2 h-4 w-4" />
+                      Launch AI Studio
+                    </Button>
+                  </Link>
+                  <Link href="/natureos/mycelium-network">
+                    <Button className="w-full justify-start bg-transparent" variant="outline">
+                      <Globe className="mr-2 h-4 w-4" />
+                      View Global Network
+                    </Button>
+                  </Link>
+                  <Link href="/natureos/documentation">
+                    <Button className="w-full justify-start bg-transparent" variant="outline">
+                      <Code className="mr-2 h-4 w-4" />
+                      API Documentation
+                    </Button>
+                  </Link>
+                  <Link href="/natureos/cloud-storage">
+                    <Button className="w-full justify-start bg-transparent" variant="outline">
+                      <Cloud className="mr-2 h-4 w-4" />
+                      Cloud Storage
+                    </Button>
+                  </Link>
+                  <Link href="/natureos/apps/petri-dish-sim">
+                    <Button className="w-full justify-start bg-transparent" variant="outline">
+                      <PipetteIcon className="mr-2 h-4 w-4" />
+                      Open Petri Simulator
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -298,111 +298,25 @@ export function NatureOSDashboard() {
         </TabsContent>
 
         <TabsContent value="mycelium" className="space-y-5">
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="col-span-2">
+          <div className="grid gap-5 md:grid-cols-1">
+            <Card>
               <CardHeader>
                 <CardTitle>Mycelium Network Status</CardTitle>
                 <CardDescription>Real-time fungal network activity</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] rounded-md border bg-muted/50 flex items-center justify-center">
-                  <div className="text-center">
-                    <Microscope className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-muted-foreground">Mycelium Network Visualization</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Network Health</CardTitle>
-                <CardDescription>Fungal intelligence metrics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">Signal Strength</p>
-                      <p className="text-sm text-muted-foreground">87% optimal</p>
+                <div className="h-[500px] w-full rounded-md border bg-muted/50">
+                  <Link href="/natureos/mycelium-network">
+                    <div className="h-full w-full flex items-center justify-center text-center hover:bg-muted transition-colors">
+                      <div>
+                        <Microscope className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                        <p className="text-muted-foreground">View Interactive Mycelium Network Visualization</p>
+                        <Button variant="link" size="sm">
+                          Launch Fullscreen
+                        </Button>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <Badge>Strong</Badge>
-                    </div>
-                  </div>
-                  <Progress value={87} />
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">Growth Rate</p>
-                      <p className="text-sm text-muted-foreground">23% above baseline</p>
-                    </div>
-                    <div className="text-right">
-                      <Badge>Excellent</Badge>
-                    </div>
-                  </div>
-                  <Progress value={78} />
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">Nutrient Flow</p>
-                      <p className="text-sm text-muted-foreground">Optimal distribution</p>
-                    </div>
-                    <div className="text-right">
-                      <Badge>Normal</Badge>
-                    </div>
-                  </div>
-                  <Progress value={92} />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Mycelium Density</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">1.87 g/cm³</div>
-                <p className="text-xs text-muted-foreground">+0.12 from last week</p>
-                <div className="mt-4 h-[60px]">
-                  <div className="h-full w-full rounded-md bg-muted/50"></div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Network Connections</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">12,543</div>
-                <p className="text-xs text-muted-foreground">+2,345 from last week</p>
-                <div className="mt-4 h-[60px]">
-                  <div className="h-full w-full rounded-md bg-muted/50"></div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Signal Propagation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">3.2 cm/s</div>
-                <p className="text-xs text-muted-foreground">+0.5 from baseline</p>
-                <div className="mt-4 h-[60px]">
-                  <div className="h-full w-full rounded-md bg-muted/50"></div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Bioelectric Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">78 mV</div>
-                <p className="text-xs text-muted-foreground">+12 from baseline</p>
-                <div className="mt-4 h-[60px]">
-                  <div className="h-full w-full rounded-md bg-muted/50"></div>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -410,379 +324,31 @@ export function NatureOSDashboard() {
         </TabsContent>
 
         <TabsContent value="devices" className="space-y-5">
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Mushroom 1</CardTitle>
-                  <Badge>Active</Badge>
-                </div>
-                <CardDescription>Ground-Based Fungal Intelligence Station</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="h-[120px] rounded-md border bg-muted/50 flex items-center justify-center">
-                    <MouseIcon className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Status</span>
-                      <span>Operational</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Deployed</span>
-                      <span>1,245 units</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Signal</span>
-                      <span>Strong</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Battery</span>
-                      <span>87%</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  View Details
+          <div className="h-[500px] w-full rounded-md border bg-muted/50 flex items-center justify-center text-center">
+            <Link href="/natureos/devices">
+              <div>
+                <MouseIcon className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">View and manage all connected devices</p>
+                <Button variant="link" size="sm">
+                  Go to Devices Page
                 </Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>ALARM</CardTitle>
-                  <Badge>Active</Badge>
-                </div>
-                <CardDescription>Environmental Safety Device</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="h-[120px] rounded-md border bg-muted/50 flex items-center justify-center">
-                    <AlertCircle className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Status</span>
-                      <span>Operational</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Deployed</span>
-                      <span>2,156 units</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Alerts</span>
-                      <span>12 today</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Battery</span>
-                      <span>92%</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  View Details
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>SporeBase</CardTitle>
-                  <Badge>Active</Badge>
-                </div>
-                <CardDescription>Distributed Spore Collection Network</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="h-[120px] rounded-md border bg-muted/50 flex items-center justify-center">
-                    <Database className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Status</span>
-                      <span>Operational</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Deployed</span>
-                      <span>879 units</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Data</span>
-                      <span>1.2TB collected</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Battery</span>
-                      <span>76%</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  View Details
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>TruffleBot</CardTitle>
-                  <Badge variant="secondary">Maintenance</Badge>
-                </div>
-                <CardDescription>Handheld Fungal Detection System</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="h-[120px] rounded-md border bg-muted/50 flex items-center justify-center">
-                    <Bug className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Status</span>
-                      <span>Maintenance</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Deployed</span>
-                      <span>432 units</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Findings</span>
-                      <span>5,432 species</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Battery</span>
-                      <span>54%</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  View Details
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Petreus</CardTitle>
-                  <Badge variant="secondary">Testing</Badge>
-                </div>
-                <CardDescription>Computational Petri Dish Platform</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="h-[120px] rounded-md border bg-muted/50 flex items-center justify-center">
-                    <PipetteIcon className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Status</span>
-                      <span>Testing</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Deployed</span>
-                      <span>78 units</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Experiments</span>
-                      <span>124 active</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Uptime</span>
-                      <span>99.2%</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  View Details
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>MycoTenna</CardTitle>
-                  <Badge variant="secondary">Development</Badge>
-                </div>
-                <CardDescription>Fungal Network Communication System</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="h-[120px] rounded-md border bg-muted/50 flex items-center justify-center">
-                    <Network className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Status</span>
-                      <span>Development</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Prototypes</span>
-                      <span>12 units</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Range</span>
-                      <span>1.2km</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span>76%</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  View Details
-                </Button>
-              </CardFooter>
-            </Card>
+              </div>
+            </Link>
           </div>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-5">
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="col-span-2">
-              <CardHeader>
-                <CardTitle>Network Growth Trends</CardTitle>
-                <CardDescription>Mycelial network expansion over time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] rounded-md border bg-muted/50 flex items-center justify-center">
-                  <div className="text-center">
-                    <BarChart3 className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-muted-foreground">Growth Analytics Visualization</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Metrics</CardTitle>
-                <CardDescription>Performance indicators</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { label: "Network Efficiency", value: "92%", change: "+5%" },
-                    { label: "Data Processing", value: "1.8TB", change: "+0.3TB" },
-                    { label: "Signal Strength", value: "87%", change: "+12%" },
-                    { label: "Node Connectivity", value: "99.2%", change: "+0.7%" },
-                    { label: "Response Time", value: "42ms", change: "-8ms" },
-                  ].map((metric, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">{metric.label}</p>
-                        <p className="text-sm text-muted-foreground">{metric.value}</p>
-                      </div>
-                      <div className={`text-sm ${metric.change.startsWith("+") ? "text-green-500" : "text-red-500"}`}>
-                        {metric.change}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="col-span-2">
-              <CardHeader>
-                <CardTitle>Species Distribution</CardTitle>
-                <CardDescription>Fungal species detected across network</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] rounded-md border bg-muted/50 flex items-center justify-center">
-                  <div className="text-center">
-                    <Gauge className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-muted-foreground">Species Distribution Chart</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="col-span-2">
-              <CardHeader>
-                <CardTitle>Environmental Impact</CardTitle>
-                <CardDescription>Ecological benefits of mycelial networks</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] rounded-md border bg-muted/50 flex items-center justify-center">
-                  <div className="text-center">
-                    <Globe className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-muted-foreground">Environmental Impact Metrics</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Research Publications</CardTitle>
-              <CardDescription>Latest scientific findings from Mycosoft research</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  {
-                    title: "Bioelectric Signaling in Mycelial Networks",
-                    authors: "Zhang, J., Smith, A., Patel, R.",
-                    journal: "Journal of Fungal Intelligence",
-                    date: "April 2025",
-                  },
-                  {
-                    title: "Distributed Computing Through Fungal Networks",
-                    authors: "Johnson, M., Williams, T., Garcia, L.",
-                    journal: "Biological Computing Quarterly",
-                    date: "March 2025",
-                  },
-                  {
-                    title: "Environmental Monitoring Using Mycelium-Based Sensors",
-                    authors: "Brown, K., Lee, S., Nguyen, T.",
-                    journal: "Environmental Science & Technology",
-                    date: "February 2025",
-                  },
-                  {
-                    title: "Fungal Intelligence: A New Paradigm for Sustainable Computing",
-                    authors: "Rockwell, M., Chen, H., Anderson, P.",
-                    journal: "Nature Biotechnology",
-                    date: "January 2025",
-                  },
-                ].map((paper, i) => (
-                  <div key={i} className="flex items-start gap-4">
-                    <div className="rounded-md bg-primary/10 p-2">
-                      <FileText className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">{paper.title}</h4>
-                      <p className="text-xs text-muted-foreground">{paper.authors}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {paper.journal} • {paper.date}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+          <div className="h-[500px] w-full rounded-md border bg-muted/50 flex items-center justify-center text-center">
+            <Link href="/natureos/analytics">
+              <div>
+                <BarChart3 className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">Explore detailed system and network analytics</p>
+                <Button variant="link" size="sm">
+                  Go to Analytics Page
+                </Button>
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                View All Publications
-              </Button>
-            </CardFooter>
-          </Card>
+            </Link>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

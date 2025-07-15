@@ -30,6 +30,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "latest",
+    "d3": "latest",
     "drizzle-kit": "latest",
     "drizzle-orm": "latest",
     "expo-sqlite": "latest",
