@@ -1,24 +1,33 @@
-import { Button } from "@/components/ui/button"
-import { getFungiById } from "@/lib/database"
-import { FungiProfile } from "@/components/fungal-database/fungi-profile"
+import { Suspense } from "react"
 import { notFound } from "next/navigation"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-import type { Fungi } from "@/types/fungi"
+import { FungiProfile } from "@/components/fungal-database/fungi-profile"
+import { FungiProfileSkeleton } from "@/components/fungal-database/fungi-profile-skeleton"
+import { getFungiById } from "@/lib/database"
+import type { Metadata } from "next"
 
-interface FungiDetailPageProps {
+interface FungiProfilePageProps {
   params: {
     id: string
   }
 }
 
-export default async function FungiDetailPage({ params }: FungiDetailPageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
+export async function generateMetadata({ params }: FungiProfilePageProps): Promise<Metadata> {
+  const fungi = await getFungiById(Number.parseInt(params.id, 10))
+
+  if (!fungi) {
+    return {
+      title: "Fungi Not Found | Mycosoft",
+    }
   }
 
-  const fungi = await getFungiById(id)
+  return {
+    title: `${fungi.scientificName} | Mycosoft Fungal Database`,
+    description: fungi.description?.substring(0, 160) || `Details for ${fungi.scientificName}`,
+  }
+}
+
+export default async function FungiProfilePage({ params }: FungiProfilePageProps) {
+  const fungi = await getFungiById(Number.parseInt(params.id, 10))
 
   if (!fungi) {
     notFound()
@@ -26,15 +35,9 @@ export default async function FungiDetailPage({ params }: FungiDetailPageProps) 
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button variant="outline" asChild>
-          <Link href="/natureos/apps/ancestry">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Ancestry Explorer
-          </Link>
-        </Button>
-      </div>
-      <FungiProfile fungi={fungi as Fungi} />
+      <Suspense fallback={<FungiProfileSkeleton />}>
+        <FungiProfile fungi={fungi} />
+      </Suspense>
     </div>
   )
 }

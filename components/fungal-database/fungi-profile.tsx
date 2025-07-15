@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import type { Fungi, FungiImage } from "@/types/fungi"
 import { Leaf, MapPin, Calendar, Microscope, Droplet, Utensils } from "lucide-react"
@@ -20,14 +19,14 @@ export function FungiProfile({ fungi }: FungiProfileProps) {
     fungi.images?.[0] || {
       id: 0,
       fungiId: fungi.id,
-      imageUrl: "/placeholder.svg",
+      imageUrl: "/placeholder.svg?width=800&height=600",
       caption: "No image available",
       isPrimary: true,
-      createdAt: "",
+      createdAt: new Date().toISOString(),
     },
   )
 
-  const getBadgeClass = (value: string | undefined) => {
+  const getBadgeClass = (value: string | undefined | null) => {
     if (!value) return "bg-gray-500 hover:bg-gray-600 text-white"
     const lowerValue = value.toLowerCase()
     if (lowerValue.includes("choice") || lowerValue.includes("good")) {
@@ -87,10 +86,10 @@ export function FungiProfile({ fungi }: FungiProfileProps) {
             </TabsList>
             <TabsContent value="description" className="pt-4 text-muted-foreground prose dark:prose-invert max-w-none">
               <h3 className="font-semibold text-lg text-foreground">Description</h3>
-              <p>{fungi.description}</p>
+              <p>{fungi.description || "No description available."}</p>
               <h3 className="font-semibold text-lg text-foreground mt-4">Ecology & Notes</h3>
-              <p>{fungi.ecology}</p>
-              <p>{fungi.notes}</p>
+              <p>{fungi.ecology || "No ecology information available."}</p>
+              <p>{fungi.notes || "No additional notes."}</p>
             </TabsContent>
             <TabsContent value="characteristics" className="pt-4">
               <FungiCharacteristicsTable characteristics={fungi.characteristics} />
@@ -109,7 +108,7 @@ const InfoItem = ({
   icon: Icon,
   label,
   value,
-}: { icon: React.ElementType; label: string; value: string | undefined }) => (
+}: { icon: React.ElementType; label: string; value: string | undefined | null }) => (
   <div className="flex items-start gap-3">
     <Icon className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
     <div>

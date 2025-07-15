@@ -62,10 +62,10 @@ export async function getFungiPaginated({
       sql.unsafe(countQuery, countParams),
     ])
 
-    const total = countRows[0]?.count ?? 0
+    const total = (countRows[0] as any)?.count ?? 0
     const totalPages = Math.max(1, Math.ceil(total / limitNum))
 
-    return { fungi: fungiRows, total, totalPages, page: pageNum }
+    return { fungi: fungiRows as any[], total, totalPages, page: pageNum }
   } catch (error) {
     console.error("🛑 Error fetching paginated fungi:", error)
     return { fungi: [], total: 0, totalPages: 1, page: 1 }
@@ -73,13 +73,46 @@ export async function getFungiPaginated({
 }
 
 export async function getFungiById(id: number): Promise<any | null> {
+  if (isNaN(id)) {
+    console.error("🛑 Invalid ID provided to getFungiById:", id)
+    return null
+  }
   try {
     const results = await sql`
       SELECT * FROM species WHERE id = ${id};
     `
     if (results.length === 0) return null
-    // Assuming the structure of species table matches what FungiProfile expects
-    return results[0]
+
+    const fungi = results[0]
+
+    // Manually construct the nested structure FungiProfile expects
+    // This is a transitional step to bridge the flat DB schema and the component's expectation
+    return {
+      ...fungi,
+      id: fungi.id,
+      scientificName: fungi.scientific_name,
+      commonName: fungi.common_name,
+      description: fungi.description,
+      edibility: fungi.edibility,
+      habitat: fungi.habitat,
+      season: fungi.season,
+      ecology: fungi.ecology,
+      notes: fungi.notes,
+      // Assume characteristics and images are JSONB columns
+      characteristics:
+        typeof fungi.characteristics === "string" ? JSON.parse(fungi.characteristics) : fungi.characteristics,
+      images: typeof fungi.images === "string" ? JSON.parse(fungi.images) : fungi.images,
+      // Construct taxonomy object from flat columns
+      taxonomy: {
+        kingdom: fungi.kingdom,
+        phylum: fungi.phylum,
+        class: fungi.class,
+        order: fungi.order,
+        family: fungi.family,
+        genus: fungi.genus,
+        species: fungi.scientific_name,
+      },
+    }
   } catch (error) {
     console.error(`🛑 Error fetching fungi with ID ${id}:`, error)
     return null
