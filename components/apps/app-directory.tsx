@@ -27,13 +27,13 @@ const apps = [
     title: "Spore Tracker",
     description: "Track global spore distribution patterns",
     icon: Globe,
-    href: "/natureos/apps/spore-tracker",
+    href: "/apps/spore-tracker",
   },
   {
     title: "Ancestry Database",
     description: "Explore fungal genealogy and relationships",
     icon: Database,
-    href: "/natureos/apps/ancestry",
+    href: "/apps/ancestry",
   },
   {
     title: "Growth Analytics",
@@ -60,7 +60,7 @@ export function AppDirectory() {
             </div>
           </CardHeader>
           <CardContent>
-            <Button className="w-full" variant="outline" asChild>
+            <Button className="w-full bg-transparent" variant="outline" asChild>
               <a href={app.href}>Launch App</a>
             </Button>
           </CardContent>

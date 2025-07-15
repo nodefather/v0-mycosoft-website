@@ -73,7 +73,7 @@ export function Header() {
             </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/natureos/apps/fungal-database">
+            <Link href="/ancestry/fungal-database">
               <Database className="h-4 w-4 mr-2" />
               Data
             </Link>

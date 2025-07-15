@@ -14,7 +14,7 @@ const quickAccessItems = [
   {
     title: "Mycology Apps",
     icon: AppWindow,
-    description: "Open Petri Dish Simulator",
+    description: "Explore our suite of simulation tools",
     href: "/apps",
   },
   {

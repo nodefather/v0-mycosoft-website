@@ -1,16 +1,15 @@
-import type { Metadata } from "next"
 import { AppDirectory } from "@/components/apps/app-directory"
-
-export const metadata: Metadata = {
-  title: "Apps - Mycosoft",
-  description: "Explore Mycosoft's suite of mycology research applications",
-}
 
 export default function AppsPage() {
   return (
     <div className="container py-6 md:py-8">
-      <h1 className="text-3xl font-bold mb-8">Mycosoft Apps</h1>
-      <AppDirectory />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <h1 className="text-4xl font-bold mb-8">Mycology Apps</h1>
+        <p className="text-xl text-muted-foreground mb-12">
+          Explore our suite of applications for fungal research, simulation, and data analysis.
+        </p>
+        <AppDirectory />
+      </div>
     </div>
   )
 }

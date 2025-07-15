@@ -38,7 +38,7 @@ export function Footer() {
             <h3 className="text-lg font-semibold mb-4">Resources</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li>
-                <Link href="/docs" className="hover:text-foreground transition-colors">
+                <Link href="/natureos/documentation" className="hover:text-foreground transition-colors">
                   Documentation
                 </Link>
               </li>

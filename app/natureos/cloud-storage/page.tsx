@@ -2,44 +2,40 @@
 
 import { DashboardHeader } from "@/components/dashboard/header"
 import { DashboardShell } from "@/components/dashboard/shell"
-import { FileBrowser } from "@/components/natureos/file-browser"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
-
-type File = {
-  name: string
-  type: "folder" | "file"
-  size: string
-  modified: string
-}
+import { Cloud } from "lucide-react"
 
 export default function CloudStoragePage() {
-  const [files, setFiles] = useState<File[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
-    fetch("/api/natureos/files")
-      .then((res) => res.json())
-      .then((data) => {
-        setFiles(data)
-        setIsLoading(false)
-      })
+    setIsClient(true)
   }, [])
 
-  if (isLoading) {
-    return (
-      <DashboardShell>
-        <DashboardHeader heading="Cloud Storage" text="Loading your files..." />
-        <div className="h-[400px] w-full flex items-center justify-center bg-muted rounded-lg">
-          <p>Loading file browser...</p>
-        </div>
-      </DashboardShell>
-    )
+  if (!isClient) {
+    return null
   }
 
   return (
     <DashboardShell>
-      <DashboardHeader heading="Cloud Storage" text="Manage your data stored on the Mycosoft Cloud." />
-      <FileBrowser files={files} />
+      <DashboardHeader heading="Cloud Storage" text="Manage your data storage" />
+      <div className="grid gap-5">
+        <Card>
+          <CardHeader>
+            <CardTitle>Cloud Storage</CardTitle>
+            <CardDescription>View and manage your stored data</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[400px] rounded-md border bg-muted/50 flex items-center justify-center">
+              <div className="text-center">
+                <Cloud className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">Cloud Storage Interface</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </DashboardShell>
   )
 }
