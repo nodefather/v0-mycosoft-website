@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LiveDataComponent() {
@@ -12,29 +12,31 @@ export default function LiveDataComponent() {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fetch live data from NatureOS
-  const fetchLiveData = useCallback(async () => {
-    try {
-      const response = await fetch('/api/dashboard?type=live');
-      if (!response.ok) throw new Error('Failed to fetch data');
-      
-      const data = await response.json();
-      setLiveData(data);
-      setLastUpdate(new Date());
-      setIsConnected(true);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-      setIsConnected(false);
-    }
-  }, []);
-
-  // Set up real-time updates
+  // Set up real-time updates via Server-Sent Events
   useEffect(() => {
-    fetchLiveData();
-    const interval = setInterval(fetchLiveData, 5000); // Update every 5 seconds
-    return () => clearInterval(interval);
-  }, [fetchLiveData]);
+    const evtSource = new EventSource('/api/dashboard/stream');
+
+    evtSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setLiveData(data);
+        setLastUpdate(new Date());
+        setIsConnected(true);
+        setError(null);
+      } catch (err) {
+        setError('Failed to parse update');
+      }
+    };
+
+    evtSource.onerror = () => {
+      setIsConnected(false);
+      setError('Connection lost');
+    };
+
+    return () => {
+      evtSource.close();
+    };
+  }, []);
 
   if (!liveData) {
     return (
