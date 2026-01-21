@@ -1,7 +1,7 @@
 import { getWikipediaImage } from "./wikipedia"
 import { SPECIES_MAPPING } from "./species-mapping"
 
-const CHEMSPIDER_API_KEY = process.env.CHEMSPIDER_API_KEY || "temp-mock-chemspider-key-123456789"
+const CHEMSPIDER_API_KEY = process.env.CHEMSPIDER_API_KEY
 
 interface ChemSpiderCompound {
   id: string
@@ -206,6 +206,9 @@ export async function getCompoundDetails(id: string): Promise<ChemSpiderCompound
 
     // Try ChemSpider API
     if (id.startsWith("CS")) {
+      if (!CHEMSPIDER_API_KEY) {
+        throw new Error("Missing CHEMSPIDER_API_KEY for ChemSpider requests")
+      }
       const csId = id.replace("CS", "")
       const response = await fetch(`https://api.rsc.org/compounds/v1/records/${csId}`, {
         headers: {
